@@ -1,133 +1,99 @@
 import SwiftUI
 
 struct SignInView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @Binding var isShowingSignUp: Bool
+    @EnvironmentObject var authService: AuthService
+    @Environment(\.dismiss) private var dismiss
 
     @State private var email = ""
     @State private var password = ""
-    @State private var showForgotPassword = false
+    @State private var errorMessage: String?
+    @State private var isLoading = false
 
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 16) {
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
+        ScrollView {
+            VStack(spacing: OceannaTheme.Spacing.xl) {
+                VStack(spacing: OceannaTheme.Spacing.sm) {
+                    Text("Welcome Back")
+                        .font(OceannaTheme.Typography.title)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                SecureField("Password", text: $password)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.password)
-            }
-            .padding(.horizontal)
-
-            Button {
-                Task {
-                    await authViewModel.signIn(email: email, password: password)
+                    Text("Sign in to continue")
+                        .font(OceannaTheme.Typography.subheadline)
+                        .foregroundColor(OceannaTheme.Colors.secondaryText)
                 }
-            } label: {
-                if authViewModel.isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                } else {
-                    Text("Sign In")
+                .padding(.top, OceannaTheme.Spacing.xl)
+
+                VStack(spacing: OceannaTheme.Spacing.md) {
+                    TextField("Email", text: $email)
+                        .textFieldStyle(OceannaTextFieldStyle())
+                        .textContentType(.emailAddress)
+                        .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
+
+                    SecureField("Password", text: $password)
+                        .textFieldStyle(OceannaTextFieldStyle())
+                        .textContentType(.password)
                 }
-            }
-            .primaryButtonStyle()
-            .padding(.horizontal)
-            .disabled(email.isEmpty || password.isEmpty || authViewModel.isLoading)
+                .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-            Button("Forgot Password?") {
-                showForgotPassword = true
-            }
-            .font(.subheadline)
+                if let error = errorMessage {
+                    Text(error)
+                        .font(OceannaTheme.Typography.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, OceannaTheme.Spacing.lg)
+                }
 
-            Divider()
-                .padding(.vertical)
-
-            VStack(spacing: 12) {
-                Text("Don't have an account?")
-                    .foregroundColor(.secondary)
-
-                Button("Create Account") {
-                    withAnimation {
-                        isShowingSignUp = true
+                Button {
+                    signIn()
+                } label: {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Text("Sign In")
+                            .frame(maxWidth: .infinity)
                     }
                 }
-                .font(.headline)
-            }
-        }
-        .alert("Error", isPresented: $authViewModel.showError) {
-            Button("OK") {
-                authViewModel.clearError()
-            }
-        } message: {
-            Text(authViewModel.errorMessage ?? "An error occurred")
-        }
-        .sheet(isPresented: $showForgotPassword) {
-            ForgotPasswordView()
-        }
-    }
-}
+                .oceannaButton(isPrimary: true)
+                .disabled(isLoading || !isValid)
+                .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-struct ForgotPasswordView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @Environment(\.dismiss) var dismiss
-
-    @State private var email = ""
-    @State private var showConfirmation = false
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Enter your email address and we'll send you a link to reset your password.")
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.secondary)
-                    .padding()
-
-                TextField("Email", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .padding(.horizontal)
-
-                Button("Send Reset Link") {
-                    Task {
-                        await authViewModel.resetPassword(email: email)
-                        showConfirmation = true
-                    }
+                Button("Forgot Password?") {
+                    // TODO: Implement password reset
                 }
-                .primaryButtonStyle()
-                .padding(.horizontal)
-                .disabled(email.isEmpty)
+                .font(OceannaTheme.Typography.subheadline)
+                .foregroundColor(OceannaTheme.Colors.secondaryText)
 
                 Spacer()
             }
-            .padding(.top)
-            .navigationTitle("Reset Password")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
+        }
+        .background(OceannaTheme.Colors.background)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var isValid: Bool {
+        !email.isEmpty && !password.isEmpty
+    }
+
+    private func signIn() {
+        isLoading = true
+        errorMessage = nil
+
+        Task {
+            do {
+                try await authService.signIn(email: email, password: password)
+            } catch {
+                errorMessage = error.localizedDescription
             }
-            .alert("Email Sent", isPresented: $showConfirmation) {
-                Button("OK") {
-                    dismiss()
-                }
-            } message: {
-                Text("Check your email for password reset instructions.")
-            }
+            isLoading = false
         }
     }
 }
 
 #Preview {
-    SignInView(isShowingSignUp: .constant(false))
-        .environmentObject(AuthViewModel())
+    NavigationStack {
+        SignInView()
+            .environmentObject(AuthService.shared)
+    }
 }
