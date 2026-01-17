@@ -1,6 +1,5 @@
 import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 @MainActor
 class FirestoreService: ObservableObject {
@@ -8,225 +7,158 @@ class FirestoreService: ObservableObject {
 
     private let db = Firestore.firestore()
 
-    // MARK: - Freelancer Profiles
+    // MARK: - Users
 
-    func getFreelancerProfile(userId: String) async throws -> FreelancerProfile? {
-        let document = try await db.collection("freelancerProfiles").document(userId).getDocument()
-        return try document.data(as: FreelancerProfile.self)
+    func fetchUser(id: String) async throws -> User? {
+        let document = try await db.collection("users").document(id).getDocument()
+        return try document.data(as: User.self)
     }
 
-    func updateFreelancerProfile(_ profile: FreelancerProfile) async throws {
-        guard let id = profile.id else { return }
-        try db.collection("freelancerProfiles").document(id).setData(from: profile, merge: true)
-    }
+    func fetchUsers(ids: [String]) async throws -> [User] {
+        guard !ids.isEmpty else { return [] }
 
-    func getNearbyFreelancers(center: GeoPoint, radiusMiles: Double, category: String? = nil, limit: Int = 50) async throws -> [FreelancerProfile] {
-        // Note: For production, use GeoFirestore or a geohashing solution
-        // This is a simplified implementation
-        var query: Query = db.collection("freelancerProfiles")
+        // Firestore limits 'in' queries to 10 items
+        var allUsers: [User] = []
+        for chunk in ids.chunked(into: 10) {
+            let snapshot = try await db.collection("users")
+                .whereField(FieldPath.documentID(), in: chunk)
+                .getDocuments()
 
-        if let category = category {
-            query = query.whereField("categories", arrayContains: category)
+            let users = snapshot.documents.compactMap { try? $0.data(as: User.self) }
+            allUsers.append(contentsOf: users)
         }
-
-        query = query.limit(to: limit)
-
-        let snapshot = try await query.getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: FreelancerProfile.self) }
+        return allUsers
     }
 
-    func searchFreelancers(skills: [String]? = nil, categories: [String]? = nil, minRating: Double? = nil) async throws -> [FreelancerProfile] {
-        var query: Query = db.collection("freelancerProfiles")
+    func fetchApprovedUsers(excluding userId: String, limit: Int = 50) async throws -> [User] {
+        let snapshot = try await db.collection("users")
+            .whereField("approvalStatus", isEqualTo: ApprovalStatus.approved.rawValue)
+            .limit(to: limit)
+            .getDocuments()
 
-        if let skills = skills, !skills.isEmpty {
-            query = query.whereField("skills", arrayContainsAny: skills)
-        }
-
-        if let minRating = minRating {
-            query = query.whereField("rating", isGreaterThanOrEqualTo: minRating)
-        }
-
-        let snapshot = try await query.getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: FreelancerProfile.self) }
+        return snapshot.documents
+            .compactMap { try? $0.data(as: User.self) }
+            .filter { $0.id != userId }
     }
 
-    // MARK: - Client Profiles
+    func fetchHireableUsers(excluding userId: String, limit: Int = 50) async throws -> [User] {
+        let snapshot = try await db.collection("users")
+            .whereField("approvalStatus", isEqualTo: ApprovalStatus.approved.rawValue)
+            .whereField("isHireable", isEqualTo: true)
+            .limit(to: limit)
+            .getDocuments()
 
-    func getClientProfile(userId: String) async throws -> ClientProfile? {
-        let document = try await db.collection("clientProfiles").document(userId).getDocument()
-        return try document.data(as: ClientProfile.self)
+        return snapshot.documents
+            .compactMap { try? $0.data(as: User.self) }
+            .filter { $0.id != userId }
     }
 
-    func updateClientProfile(_ profile: ClientProfile) async throws {
-        guard let id = profile.id else { return }
-        try db.collection("clientProfiles").document(id).setData(from: profile, merge: true)
-    }
+    // MARK: - Portfolio
 
-    // MARK: - Projects
-
-    func createProject(_ project: Project) async throws -> String {
-        let docRef = try db.collection("projects").addDocument(from: project)
-        return docRef.documentID
-    }
-
-    func getProject(id: String) async throws -> Project? {
-        let document = try await db.collection("projects").document(id).getDocument()
-        return try document.data(as: Project.self)
-    }
-
-    func updateProject(_ project: Project) async throws {
-        guard let id = project.id else { return }
-        try db.collection("projects").document(id).setData(from: project, merge: true)
-    }
-
-    func getOpenProjects(near location: GeoPoint? = nil, category: String? = nil, limit: Int = 20) async throws -> [Project] {
-        var query: Query = db.collection("projects")
-            .whereField("status", isEqualTo: Project.ProjectStatus.open.rawValue)
-            .order(by: "createdAt", descending: true)
-
-        if let category = category {
-            query = query.whereField("category", isEqualTo: category)
-        }
-
-        query = query.limit(to: limit)
-
-        let snapshot = try await query.getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: Project.self) }
-    }
-
-    func getClientProjects(clientId: String) async throws -> [Project] {
-        let snapshot = try await db.collection("projects")
-            .whereField("clientId", isEqualTo: clientId)
+    func fetchPortfolio(for userId: String) async throws -> [PortfolioItem] {
+        let snapshot = try await db.collection("portfolios")
+            .whereField("userId", isEqualTo: userId)
             .order(by: "createdAt", descending: true)
             .getDocuments()
 
-        return snapshot.documents.compactMap { try? $0.data(as: Project.self) }
+        return snapshot.documents.compactMap { try? $0.data(as: PortfolioItem.self) }
     }
 
-    func applyToProject(projectId: String, freelancerId: String) async throws {
-        try await db.collection("projects").document(projectId).updateData([
-            "applicants": FieldValue.arrayUnion([freelancerId])
+    func addPortfolioItem(_ item: PortfolioItem) async throws {
+        let docRef = db.collection("portfolios").document()
+        var itemWithId = item
+        itemWithId.id = docRef.documentID
+        try docRef.setData(from: itemWithId)
+    }
+
+    func deletePortfolioItem(id: String) async throws {
+        try await db.collection("portfolios").document(id).delete()
+    }
+
+    // MARK: - Posts
+
+    func fetchPosts(for userIds: [String], limit: Int = 50) async throws -> [FeedPost] {
+        guard !userIds.isEmpty else { return [] }
+
+        var allPosts: [FeedPost] = []
+        for chunk in userIds.chunked(into: 10) {
+            let snapshot = try await db.collection("posts")
+                .whereField("authorId", in: chunk)
+                .order(by: "createdAt", descending: true)
+                .limit(to: limit)
+                .getDocuments()
+
+            let posts = snapshot.documents.compactMap { try? $0.data(as: FeedPost.self) }
+            allPosts.append(contentsOf: posts)
+        }
+
+        return allPosts.sorted { $0.createdAt > $1.createdAt }
+    }
+
+    func fetchOpportunities(limit: Int = 50) async throws -> [FeedPost] {
+        let snapshot = try await db.collection("posts")
+            .whereField("postType", isEqualTo: PostType.opportunity.rawValue)
+            .order(by: "createdAt", descending: true)
+            .limit(to: limit)
+            .getDocuments()
+
+        return snapshot.documents.compactMap { try? $0.data(as: FeedPost.self) }
+    }
+
+    func createPost(_ post: FeedPost) async throws -> FeedPost {
+        let docRef = db.collection("posts").document()
+        var postWithId = post
+        postWithId.id = docRef.documentID
+        try docRef.setData(from: postWithId)
+        return postWithId
+    }
+
+    func expressInterest(postId: String, userId: String) async throws {
+        try await db.collection("posts").document(postId).updateData([
+            "interestedUserIds": FieldValue.arrayUnion([userId])
+        ])
+    }
+
+    func applyToOpportunity(postId: String, userId: String) async throws {
+        try await db.collection("posts").document(postId).updateData([
+            "applicantIds": FieldValue.arrayUnion([userId])
         ])
     }
 
     // MARK: - Reviews
 
-    func createReview(_ review: Review) async throws {
-        _ = try db.collection("reviews").addDocument(from: review)
-
-        // Update the reviewee's rating
-        try await updateUserRating(userId: review.revieweeId, newRating: review.rating)
-    }
-
-    func getReviews(for userId: String, limit: Int = 20) async throws -> [Review] {
+    func fetchReviews(for userId: String) async throws -> [Review] {
         let snapshot = try await db.collection("reviews")
             .whereField("revieweeId", isEqualTo: userId)
-            .whereField("isPublic", isEqualTo: true)
             .order(by: "createdAt", descending: true)
-            .limit(to: limit)
             .getDocuments()
 
         return snapshot.documents.compactMap { try? $0.data(as: Review.self) }
     }
 
-    private func updateUserRating(userId: String, newRating: Double) async throws {
-        // Fetch all reviews for recalculation
-        let reviews = try await getReviews(for: userId, limit: 1000)
-        let totalRating = reviews.reduce(0) { $0 + $1.rating }
-        let averageRating = reviews.isEmpty ? 0 : totalRating / Double(reviews.count)
-
-        // Update freelancer or client profile
-        let freelancerDoc = db.collection("freelancerProfiles").document(userId)
-        let clientDoc = db.collection("clientProfiles").document(userId)
-
-        let freelancerSnapshot = try await freelancerDoc.getDocument()
-        if freelancerSnapshot.exists {
-            try await freelancerDoc.updateData([
-                "rating": averageRating,
-                "reviewCount": reviews.count
-            ])
-        }
-
-        let clientSnapshot = try await clientDoc.getDocument()
-        if clientSnapshot.exists {
-            try await clientDoc.updateData([
-                "rating": averageRating,
-                "reviewCount": reviews.count
-            ])
-        }
+    func createReview(_ review: Review) async throws {
+        let docRef = db.collection("reviews").document()
+        var reviewWithId = review
+        reviewWithId.id = docRef.documentID
+        try docRef.setData(from: reviewWithId)
     }
 
-    // MARK: - Feed Posts
-
-    func createPost(_ post: FeedPost) async throws -> String {
-        let docRef = try db.collection("posts").addDocument(from: post)
-        return docRef.documentID
-    }
-
-    func getFeedPosts(forUserId userId: String? = nil, limit: Int = 20) async throws -> [FeedPost] {
-        var query: Query = db.collection("posts")
-            .order(by: "createdAt", descending: true)
-
-        if let userId = userId {
-            query = query.whereField("authorId", isEqualTo: userId)
-        }
-
-        query = query.limit(to: limit)
-
-        let snapshot = try await query.getDocuments()
-        return snapshot.documents.compactMap { try? $0.data(as: FeedPost.self) }
-    }
-
-    func likePost(postId: String, userId: String) async throws {
-        try await db.collection("posts").document(postId).updateData([
-            "likes": FieldValue.arrayUnion([userId])
-        ])
-    }
-
-    func unlikePost(postId: String, userId: String) async throws {
-        try await db.collection("posts").document(postId).updateData([
-            "likes": FieldValue.arrayRemove([userId])
-        ])
-    }
-
-    // MARK: - Creative Circles
-
-    func getCreativeCircles(near location: GeoPoint, radiusMiles: Double) async throws -> [CreativeCircle] {
-        // Simplified - in production use geohashing
-        let snapshot = try await db.collection("creativeCircles")
-            .whereField("isPublic", isEqualTo: true)
-            .limit(to: 20)
+    func hasReviewed(conversationId: String, reviewerId: String) async throws -> Bool {
+        let snapshot = try await db.collection("reviews")
+            .whereField("conversationId", isEqualTo: conversationId)
+            .whereField("reviewerId", isEqualTo: reviewerId)
             .getDocuments()
 
-        return snapshot.documents.compactMap { try? $0.data(as: CreativeCircle.self) }
+        return !snapshot.documents.isEmpty
     }
+}
 
-    func joinCircle(circleId: String, userId: String) async throws {
-        try await db.collection("creativeCircles").document(circleId).updateData([
-            "members": FieldValue.arrayUnion([userId])
-        ])
-    }
+// MARK: - Array Extension
 
-    func leaveCircle(circleId: String, userId: String) async throws {
-        try await db.collection("creativeCircles").document(circleId).updateData([
-            "members": FieldValue.arrayRemove([userId])
-        ])
-    }
-
-    // MARK: - User Lookup
-
-    func getUser(id: String) async throws -> User? {
-        let document = try await db.collection("users").document(id).getDocument()
-        return try document.data(as: User.self)
-    }
-
-    func getUsers(ids: [String]) async throws -> [User] {
-        guard !ids.isEmpty else { return [] }
-
-        let snapshot = try await db.collection("users")
-            .whereField(FieldPath.documentID(), in: ids)
-            .getDocuments()
-
-        return snapshot.documents.compactMap { try? $0.data(as: User.self) }
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
     }
 }
