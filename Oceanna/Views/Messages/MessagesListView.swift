@@ -1,159 +1,277 @@
 import SwiftUI
 
 struct MessagesListView: View {
-    @StateObject private var viewModel = MessagesViewModel()
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var authService: AuthService
+    @StateObject private var connectionService = ConnectionService.shared
+    @StateObject private var firestoreService = FirestoreService.shared
+
+    @State private var conversations: [Conversation] = []
+    @State private var participants: [String: User] = [:]
+    @State private var isLoading = true
+    @State private var selectedSection: MessageSection = .messages
+
+    enum MessageSection: String, CaseIterable {
+        case messages = "Messages"
+        case requests = "Requests"
+    }
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.conversations) { conversation in
-                    NavigationLink(destination: ChatView(conversation: conversation, viewModel: viewModel)) {
-                        ConversationRow(
-                            conversation: conversation,
-                            otherUser: viewModel.getOtherParticipant(in: conversation),
-                            unreadCount: viewModel.getUnreadCount(for: conversation)
-                        )
+            VStack(spacing: 0) {
+                // Section Picker
+                Picker("Section", selection: $selectedSection) {
+                    ForEach(MessageSection.allCases, id: \.self) { section in
+                        HStack {
+                            Text(section.rawValue)
+                            if section == .requests && !connectionService.pendingRequests.isEmpty {
+                                Text("\(connectionService.pendingRequests.count)")
+                                    .font(OceannaTheme.Typography.monoSmall)
+                            }
+                        }
+                        .tag(section)
                     }
                 }
-                .onDelete { indexSet in
-                    for index in indexSet {
-                        let conversation = viewModel.conversations[index]
-                        Task {
-                            await viewModel.archiveConversation(conversation)
+                .pickerStyle(.segmented)
+                .padding(OceannaTheme.Spacing.md)
+
+                // Content
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else {
+                    switch selectedSection {
+                    case .messages:
+                        messagesSection
+                    case .requests:
+                        requestsSection
+                    }
+                }
+            }
+            .background(OceannaTheme.Colors.background)
+            .navigationTitle("Inbox")
+            .navigationBarTitleDisplayMode(.inline)
+            .task {
+                await loadData()
+            }
+            .refreshable {
+                await loadData()
+            }
+        }
+    }
+
+    private var messagesSection: some View {
+        Group {
+            if conversations.isEmpty {
+                VStack(spacing: OceannaTheme.Spacing.md) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                        .font(.system(size: 48))
+                        .foregroundColor(OceannaTheme.Colors.tertiaryText)
+
+                    Text("No messages yet")
+                        .font(OceannaTheme.Typography.headline)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                    Text("Connect with people to start chatting")
+                        .font(OceannaTheme.Typography.subheadline)
+                        .foregroundColor(OceannaTheme.Colors.secondaryText)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(conversations) { conversation in
+                        if let currentUserId = authService.userProfile?.id,
+                           let otherUserId = conversation.otherParticipantId(currentUserId: currentUserId),
+                           let otherUser = participants[otherUserId] {
+                            NavigationLink {
+                                ChatView(conversation: conversation, otherUser: otherUser)
+                            } label: {
+                                ConversationRow(
+                                    conversation: conversation,
+                                    otherUser: otherUser,
+                                    currentUserId: currentUserId
+                                )
+                            }
                         }
                     }
                 }
+                .listStyle(.plain)
             }
-            .listStyle(.plain)
-            .navigationTitle("Messages")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        // New message
-                    } label: {
-                        Image(systemName: "square.and.pencil")
+        }
+    }
+
+    private var requestsSection: some View {
+        Group {
+            if connectionService.pendingRequests.isEmpty {
+                VStack(spacing: OceannaTheme.Spacing.md) {
+                    Image(systemName: "person.badge.plus")
+                        .font(.system(size: 48))
+                        .foregroundColor(OceannaTheme.Colors.tertiaryText)
+
+                    Text("No pending requests")
+                        .font(OceannaTheme.Typography.headline)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(connectionService.pendingRequests) { request in
+                        if let requester = participants[request.requesterId] {
+                            ConnectionRequestRow(
+                                request: request,
+                                requester: requester,
+                                onAccept: { acceptRequest(request) },
+                                onIgnore: { ignoreRequest(request) }
+                            )
+                        }
                     }
                 }
+                .listStyle(.plain)
             }
-            .overlay {
-                if viewModel.conversations.isEmpty && !viewModel.isLoading {
-                    ContentUnavailableView(
-                        "No Messages",
-                        systemImage: "message",
-                        description: Text("Start a conversation by connecting with freelancers")
-                    )
-                }
+        }
+    }
+
+    private func loadData() async {
+        guard let userId = authService.userProfile?.id else { return }
+
+        // Load connections and pending requests
+        await connectionService.fetchConnections(for: userId)
+        await connectionService.fetchPendingRequests(for: userId)
+
+        // TODO: Load conversations from Firestore
+        // For now, conversations will be empty until messaging service is implemented
+
+        // Fetch all participant users
+        var allUserIds = Set(connectionService.pendingRequests.map { $0.requesterId })
+        allUserIds.formUnion(connectionService.connectedUserIds)
+
+        if !allUserIds.isEmpty {
+            do {
+                let users = try await firestoreService.fetchUsers(ids: Array(allUserIds))
+                participants = Dictionary(uniqueKeysWithValues: users.compactMap { user in
+                    guard let id = user.id else { return nil }
+                    return (id, user)
+                })
+            } catch {
+                print("Error loading participants: \(error)")
             }
-            .task {
-                if let userId = authViewModel.currentUser?.id {
-                    viewModel.startListening(for: userId)
-                    await viewModel.loadConversationUsers()
-                }
-            }
-            .onDisappear {
-                viewModel.stopListening()
-            }
+        }
+
+        isLoading = false
+    }
+
+    private func acceptRequest(_ request: Connection) {
+        Task {
+            try? await connectionService.acceptConnection(request)
+            await loadData()
+        }
+    }
+
+    private func ignoreRequest(_ request: Connection) {
+        Task {
+            try? await connectionService.ignoreConnection(request)
+            await loadData()
         }
     }
 }
 
 struct ConversationRow: View {
     let conversation: Conversation
-    let otherUser: User?
-    let unreadCount: Int
+    let otherUser: User
+    let currentUserId: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Avatar
-            if let avatarUrl = otherUser?.avatarUrl, let url = URL(string: avatarUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    avatarPlaceholder
-                }
-                .frame(width: 56, height: 56)
-                .clipShape(Circle())
-            } else {
-                avatarPlaceholder
-            }
+        HStack(spacing: OceannaTheme.Spacing.sm) {
+            AvatarView(url: otherUser.avatarUrl, initials: otherUser.initials, size: 50)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: OceannaTheme.Spacing.xxs) {
                 HStack {
-                    Text(otherUser?.displayName ?? "User")
-                        .font(.headline)
+                    Text(otherUser.displayName)
+                        .font(OceannaTheme.Typography.headline)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                    Spacer()
+
+                    if let lastMessageAt = conversation.lastMessageAt {
+                        Text(lastMessageAt, style: .relative)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(OceannaTheme.Colors.tertiaryText)
+                    }
+                }
+
+                HStack {
+                    Text(conversation.lastMessage ?? "Start a conversation")
+                        .font(OceannaTheme.Typography.subheadline)
+                        .foregroundColor(OceannaTheme.Colors.secondaryText)
                         .lineLimit(1)
 
-                    if let user = otherUser, user.isVerified {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    }
-
                     Spacer()
 
-                    if let timestamp = conversation.lastMessageTimestamp {
-                        Text(formatTimestamp(timestamp))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                HStack {
-                    Text(conversation.lastMessage ?? "No messages yet")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-
-                    Spacer()
-
-                    if unreadCount > 0 {
-                        Text("\(unreadCount)")
-                            .font(.caption)
-                            .fontWeight(.bold)
+                    if conversation.unreadCount(for: currentUserId) > 0 {
+                        Text("\(conversation.unreadCount(for: currentUserId))")
+                            .font(OceannaTheme.Typography.monoSmall)
                             .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue)
-                            .clipShape(Capsule())
+                            .padding(.horizontal, OceannaTheme.Spacing.xs)
+                            .padding(.vertical, OceannaTheme.Spacing.xxs)
+                            .background(OceannaTheme.Colors.primary)
+                            .cornerRadius(OceannaTheme.Radius.full)
                     }
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, OceannaTheme.Spacing.xs)
     }
+}
 
-    private var avatarPlaceholder: some View {
-        Circle()
-            .fill(Color.blue.opacity(0.2))
-            .frame(width: 56, height: 56)
-            .overlay(
-                Text(otherUser?.initials ?? "?")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-            )
-    }
+struct ConnectionRequestRow: View {
+    let request: Connection
+    let requester: User
+    let onAccept: () -> Void
+    let onIgnore: () -> Void
 
-    private func formatTimestamp(_ date: Date) -> String {
-        let calendar = Calendar.current
+    var body: some View {
+        VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
+            HStack(spacing: OceannaTheme.Spacing.sm) {
+                AvatarView(url: requester.avatarUrl, initials: requester.initials, size: 50)
 
-        if calendar.isDateInToday(date) {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "h:mm a"
-            return formatter.string(from: date)
-        } else if calendar.isDateInYesterday(date) {
-            return "Yesterday"
-        } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
-            return formatter.string(from: date)
+                VStack(alignment: .leading, spacing: OceannaTheme.Spacing.xxs) {
+                    Text(requester.displayName)
+                        .font(OceannaTheme.Typography.headline)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                    if let skill = requester.topSkill {
+                        Text(skill)
+                            .font(OceannaTheme.Typography.mono)
+                            .foregroundColor(OceannaTheme.Colors.secondaryText)
+                    }
+
+                    if !requester.city.isEmpty {
+                        Text(requester.city)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(OceannaTheme.Colors.tertiaryText)
+                    }
+                }
+
+                Spacer()
+            }
+
+            HStack(spacing: OceannaTheme.Spacing.md) {
+                Button("Ignore") {
+                    onIgnore()
+                }
+                .oceannaButton(isPrimary: false)
+
+                Button("Accept") {
+                    onAccept()
+                }
+                .oceannaButton(isPrimary: true)
+            }
         }
+        .padding(.vertical, OceannaTheme.Spacing.sm)
     }
 }
 
 #Preview {
     MessagesListView()
-        .environmentObject(AuthViewModel())
+        .environmentObject(AuthService.shared)
 }
