@@ -1,37 +1,41 @@
 import Foundation
 import FirebaseFirestore
 
-struct Conversation: Identifiable, Codable {
-    @DocumentID var id: String?
-    var participants: [String] // User IDs
-    var lastMessage: String?
-    var lastMessageTimestamp: Date?
-    var lastMessageSenderId: String?
-    var unreadCount: [String: Int] // userId: count
-    var createdAt: Date
-    var isActive: Bool
-    var projectId: String? // Optional link to a project
+enum MessageType: String, Codable {
+    case text = "text"
+    case image = "image"
+    case quote = "quote"
+    case proposal = "proposal"
+    case milestone = "milestone"
+    case completion = "completion"
+}
 
-    init(
-        id: String? = nil,
-        participants: [String],
-        lastMessage: String? = nil,
-        lastMessageTimestamp: Date? = nil,
-        lastMessageSenderId: String? = nil,
-        unreadCount: [String: Int] = [:],
-        createdAt: Date = Date(),
-        isActive: Bool = true,
-        projectId: String? = nil
-    ) {
-        self.id = id
-        self.participants = participants
-        self.lastMessage = lastMessage
-        self.lastMessageTimestamp = lastMessageTimestamp
-        self.lastMessageSenderId = lastMessageSenderId
-        self.unreadCount = unreadCount
-        self.createdAt = createdAt
-        self.isActive = isActive
-        self.projectId = projectId
+enum MilestoneStatus: String, Codable {
+    case pending = "pending"
+    case completed = "completed"
+}
+
+struct MilestoneData: Codable {
+    var title: String
+    var amount: String?
+    var status: MilestoneStatus
+
+    init(title: String, amount: String? = nil, status: MilestoneStatus = .pending) {
+        self.title = title
+        self.amount = amount
+        self.status = status
+    }
+}
+
+struct QuoteData: Codable {
+    var description: String
+    var amount: String
+    var validUntil: Date?
+
+    init(description: String, amount: String, validUntil: Date? = nil) {
+        self.description = description
+        self.amount = amount
+        self.validUntil = validUntil
     }
 }
 
@@ -41,34 +45,10 @@ struct Message: Identifiable, Codable {
     var senderId: String
     var content: String
     var messageType: MessageType
-    var timestamp: Date
-    var isRead: Bool
-    var attachments: [Attachment]
-    var replyToMessageId: String?
-
-    enum MessageType: String, Codable {
-        case text
-        case image
-        case file
-        case projectProposal
-        case systemMessage
-    }
-
-    struct Attachment: Identifiable, Codable {
-        var id: String = UUID().uuidString
-        var url: String
-        var type: AttachmentType
-        var name: String?
-        var size: Int?
-
-        enum AttachmentType: String, Codable {
-            case image
-            case video
-            case pdf
-            case document
-            case other
-        }
-    }
+    var attachments: [String]
+    var quoteData: QuoteData?
+    var milestoneData: MilestoneData?
+    var createdAt: Date
 
     init(
         id: String? = nil,
@@ -76,41 +56,92 @@ struct Message: Identifiable, Codable {
         senderId: String,
         content: String,
         messageType: MessageType = .text,
-        timestamp: Date = Date(),
-        isRead: Bool = false,
-        attachments: [Attachment] = [],
-        replyToMessageId: String? = nil
+        attachments: [String] = [],
+        quoteData: QuoteData? = nil,
+        milestoneData: MilestoneData? = nil,
+        createdAt: Date = Date()
     ) {
         self.id = id
         self.conversationId = conversationId
         self.senderId = senderId
         self.content = content
         self.messageType = messageType
-        self.timestamp = timestamp
-        self.isRead = isRead
         self.attachments = attachments
-        self.replyToMessageId = replyToMessageId
+        self.quoteData = quoteData
+        self.milestoneData = milestoneData
+        self.createdAt = createdAt
     }
 }
 
-extension Conversation {
-    static let example = Conversation(
-        id: "conv123",
-        participants: ["user123", "user456"],
-        lastMessage: "Sounds great! Let's discuss the details.",
-        lastMessageTimestamp: Date(),
-        lastMessageSenderId: "user456",
-        unreadCount: ["user123": 1, "user456": 0]
-    )
+struct Conversation: Identifiable, Codable {
+    @DocumentID var id: String?
+    var participantIds: [String]
+    var projectReference: String?
+    var lastMessage: String?
+    var lastMessageAt: Date?
+    var unreadCounts: [String: Int]
+    var isCompleted: Bool
+    var completionConfirmedBy: [String]
+    var createdAt: Date
+
+    init(
+        id: String? = nil,
+        participantIds: [String],
+        projectReference: String? = nil,
+        lastMessage: String? = nil,
+        lastMessageAt: Date? = nil,
+        unreadCounts: [String: Int] = [:],
+        isCompleted: Bool = false,
+        completionConfirmedBy: [String] = [],
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.participantIds = participantIds
+        self.projectReference = projectReference
+        self.lastMessage = lastMessage
+        self.lastMessageAt = lastMessageAt
+        self.unreadCounts = unreadCounts
+        self.isCompleted = isCompleted
+        self.completionConfirmedBy = completionConfirmedBy
+        self.createdAt = createdAt
+    }
+
+    func otherParticipantId(currentUserId: String) -> String? {
+        participantIds.first { $0 != currentUserId }
+    }
+
+    func unreadCount(for userId: String) -> Int {
+        unreadCounts[userId] ?? 0
+    }
+
+    var canLeaveReview: Bool {
+        completionConfirmedBy.count == 2
+    }
 }
 
 extension Message {
     static let example = Message(
-        id: "msg123",
-        conversationId: "conv123",
-        senderId: "user456",
-        content: "Hi! I saw your project posting and I'd love to help. I have experience with similar work.",
-        messageType: .text,
-        timestamp: Date()
+        id: "msg1",
+        conversationId: "conv1",
+        senderId: "user1",
+        content: "Hey! I'd love to work on this project with you."
+    )
+
+    static let quoteExample = Message(
+        id: "msg2",
+        conversationId: "conv1",
+        senderId: "user1",
+        content: "Here's my quote for the project:",
+        messageType: .quote,
+        quoteData: QuoteData(description: "Brand identity package", amount: "$1,500")
+    )
+}
+
+extension Conversation {
+    static let example = Conversation(
+        id: "conv1",
+        participantIds: ["user1", "user2"],
+        lastMessage: "Sounds great, let's do it!",
+        lastMessageAt: Date()
     )
 }
