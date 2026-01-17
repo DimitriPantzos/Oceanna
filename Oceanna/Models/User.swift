@@ -1,21 +1,59 @@
 import Foundation
 import FirebaseFirestore
 
-enum UserType: String, Codable, CaseIterable {
-    case freelancer
-    case client
+// MARK: - Availability
+enum Availability: String, Codable, CaseIterable {
+    case inPerson = "in_person"
+    case remote = "remote"
+    case both = "both"
+
+    var displayName: String {
+        switch self {
+        case .inPerson: return "In-Person"
+        case .remote: return "Remote"
+        case .both: return "In-Person & Remote"
+        }
+    }
 }
 
+// MARK: - Approval Status
+enum ApprovalStatus: String, Codable {
+    case pending = "pending"
+    case approved = "approved"
+    case waitlisted = "waitlisted"
+}
+
+// MARK: - Profile Visibility
+struct ProfileVisibility: Codable {
+    var showSkills: Bool = true
+    var showPortfolio: Bool = true
+    var showBio: Bool = true
+    var showCity: Bool = true
+
+    init(showSkills: Bool = true, showPortfolio: Bool = true, showBio: Bool = true, showCity: Bool = true) {
+        self.showSkills = showSkills
+        self.showPortfolio = showPortfolio
+        self.showBio = showBio
+        self.showCity = showCity
+    }
+}
+
+// MARK: - User Model
 struct User: Identifiable, Codable {
     @DocumentID var id: String?
     var email: String
     var displayName: String
     var avatarUrl: String?
-    var userType: UserType
-    var isVerified: Bool
-    var createdAt: Date
-    var location: GeoPoint?
+    var city: String
+    var isHireable: Bool
+    var availability: Availability
+    var skills: [String]
+    var lookingFor: [String]
     var bio: String?
+    var isVerified: Bool
+    var approvalStatus: ApprovalStatus
+    var visibility: ProfileVisibility
+    var createdAt: Date
 
     var initials: String {
         let names = displayName.split(separator: " ")
@@ -24,36 +62,67 @@ struct User: Identifiable, Codable {
         return "\(firstInitial)\(lastInitial ?? Character(""))"
     }
 
+    var availabilityBadge: String {
+        "\(city) · \(availability.displayName)"
+    }
+
+    var topSkill: String? {
+        skills.first
+    }
+
     init(
         id: String? = nil,
         email: String,
         displayName: String,
         avatarUrl: String? = nil,
-        userType: UserType,
+        city: String = "",
+        isHireable: Bool = true,
+        availability: Availability = .both,
+        skills: [String] = [],
+        lookingFor: [String] = [],
+        bio: String? = nil,
         isVerified: Bool = false,
-        createdAt: Date = Date(),
-        location: GeoPoint? = nil,
-        bio: String? = nil
+        approvalStatus: ApprovalStatus = .pending,
+        visibility: ProfileVisibility = ProfileVisibility(),
+        createdAt: Date = Date()
     ) {
         self.id = id
         self.email = email
         self.displayName = displayName
         self.avatarUrl = avatarUrl
-        self.userType = userType
-        self.isVerified = isVerified
-        self.createdAt = createdAt
-        self.location = location
+        self.city = city
+        self.isHireable = isHireable
+        self.availability = availability
+        self.skills = skills
+        self.lookingFor = lookingFor
         self.bio = bio
+        self.isVerified = isVerified
+        self.approvalStatus = approvalStatus
+        self.visibility = visibility
+        self.createdAt = createdAt
     }
 }
 
 extension User {
     static let example = User(
         id: "user123",
-        email: "john@example.com",
-        displayName: "John Doe",
-        userType: .freelancer,
+        email: "sarah@example.com",
+        displayName: "Sarah Chen",
+        city: "Brooklyn, NY",
+        isHireable: true,
+        availability: .both,
+        skills: ["UI/UX Design", "Figma", "Branding"],
+        lookingFor: ["Photography", "Illustration"],
+        bio: "Creative director with a passion for minimal design.",
         isVerified: true,
-        bio: "Creative designer with 5 years of experience"
+        approvalStatus: .approved
+    )
+
+    static let pendingExample = User(
+        id: "user456",
+        email: "pending@example.com",
+        displayName: "New User",
+        city: "Los Angeles, CA",
+        approvalStatus: .pending
     )
 }
