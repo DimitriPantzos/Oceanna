@@ -1,254 +1,248 @@
 import SwiftUI
-import PhotosUI
 
 struct CreatePostView: View {
-    @Environment(\.dismiss) var dismiss
-    @ObservedObject var viewModel: FeedViewModel
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var authService: AuthService
+    @StateObject private var firestoreService = FirestoreService.shared
+    @Environment(\.dismiss) private var dismiss
 
+    @State private var postType: PostType = .portfolio
     @State private var content = ""
-    @State private var postType: FeedPost.PostType = .update
-    @State private var selectedPhotos: [PhotosPickerItem] = []
-    @State private var selectedImages: [UIImage] = []
     @State private var tags: [String] = []
     @State private var newTag = ""
-    @State private var visibility: FeedPost.Visibility = .publicPost
 
-    // Collaboration fields
-    @State private var isCollaboration = false
-    @State private var collabTitle = ""
-    @State private var collabDescription = ""
-    @State private var rolesNeeded: [String] = []
-    @State private var newRole = ""
-    @State private var isPaid = false
-    @State private var deadline: Date = Date().addingTimeInterval(7 * 24 * 60 * 60)
-    @State private var hasDeadline = false
+    // Opportunity fields
+    @State private var budget = ""
+    @State private var timeline = ""
+    @State private var locationPreference: Availability = .both
+    @State private var skillsNeeded: [String] = []
+    @State private var newSkill = ""
 
-    var isValid: Bool {
-        !content.isEmpty && (postType != .collaborationRequest || (!collabTitle.isEmpty && !rolesNeeded.isEmpty))
-    }
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Post Type
-                Section {
-                    Picker("Post Type", selection: $postType) {
-                        ForEach(FeedPost.PostType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
-                        }
-                    }
-                    .onChange(of: postType) { _, newValue in
-                        isCollaboration = newValue == .collaborationRequest
-                    }
-                }
+            ScrollView {
+                VStack(alignment: .leading, spacing: OceannaTheme.Spacing.lg) {
+                    // Post Type Selector
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
+                        Text("Post Type")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                // Content
-                Section {
-                    TextField("What's on your mind?", text: $content, axis: .vertical)
-                        .lineLimit(5...10)
-                } header: {
-                    Text("Content")
-                }
-
-                // Collaboration Details
-                if isCollaboration {
-                    Section {
-                        TextField("Collaboration Title", text: $collabTitle)
-
-                        TextField("Description", text: $collabDescription, axis: .vertical)
-                            .lineLimit(3...5)
-
-                        Toggle("Paid Opportunity", isOn: $isPaid)
-
-                        Toggle("Has Deadline", isOn: $hasDeadline)
-
-                        if hasDeadline {
-                            DatePicker("Apply By", selection: $deadline, displayedComponents: .date)
-                        }
-                    } header: {
-                        Text("Collaboration Details")
-                    }
-
-                    Section {
-                        ForEach(rolesNeeded, id: \.self) { role in
-                            HStack {
-                                Text(role)
-                                Spacer()
-                                Button {
-                                    rolesNeeded.removeAll { $0 == role }
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundColor(.red)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: OceannaTheme.Spacing.xs) {
+                                ForEach(PostType.allCases, id: \.self) { type in
+                                    Button {
+                                        postType = type
+                                    } label: {
+                                        HStack(spacing: OceannaTheme.Spacing.xxs) {
+                                            Image(systemName: type.icon)
+                                            Text(type.displayName)
+                                        }
+                                        .font(OceannaTheme.Typography.mono)
+                                        .padding(.horizontal, OceannaTheme.Spacing.sm)
+                                        .padding(.vertical, OceannaTheme.Spacing.xs)
+                                        .background(postType == type ? OceannaTheme.Colors.primary : OceannaTheme.Colors.secondaryBackground)
+                                        .foregroundColor(postType == type ? .white : OceannaTheme.Colors.primaryText)
+                                        .cornerRadius(OceannaTheme.Radius.sm)
+                                    }
                                 }
                             }
                         }
+                    }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                    // Content
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
+                        Text("Content")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                        TextField("What's on your mind?", text: $content, axis: .vertical)
+                            .textFieldStyle(OceannaTextFieldStyle())
+                            .lineLimit(4...10)
+                    }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                    // Opportunity Details
+                    if postType == .opportunity {
+                        opportunityFields
+                    }
+
+                    // Tags
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
+                        Text("Tags")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
 
                         HStack {
-                            TextField("Add role needed", text: $newRole)
+                            TextField("Add tag", text: $newTag)
+                                .textFieldStyle(OceannaTextFieldStyle())
+
                             Button {
-                                if !newRole.isEmpty {
-                                    rolesNeeded.append(newRole)
-                                    newRole = ""
+                                if !newTag.isEmpty {
+                                    tags.append(newTag)
+                                    newTag = ""
                                 }
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OceannaTheme.Colors.primary)
                             }
-                            .disabled(newRole.isEmpty)
                         }
-                    } header: {
-                        Text("Roles Needed")
-                    }
-                }
 
-                // Photos
-                Section {
-                    PhotosPicker(selection: $selectedPhotos, maxSelectionCount: 5, matching: .images) {
-                        HStack {
-                            Image(systemName: "photo.on.rectangle.angled")
-                            Text("Add Photos")
-                        }
-                    }
-
-                    if !selectedImages.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                ForEach(Array(selectedImages.enumerated()), id: \.offset) { index, image in
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 80, height: 80)
-                                        .cornerRadius(8)
-                                        .overlay(alignment: .topTrailing) {
-                                            Button {
-                                                selectedImages.remove(at: index)
-                                                selectedPhotos.remove(at: index)
-                                            } label: {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.white)
-                                                    .background(Circle().fill(Color.black.opacity(0.5)))
-                                            }
-                                            .padding(4)
-                                        }
+                        FlowLayout(spacing: OceannaTheme.Spacing.xs) {
+                            ForEach(tags, id: \.self) { tag in
+                                HStack(spacing: OceannaTheme.Spacing.xxs) {
+                                    Text("#\(tag)")
+                                    Button {
+                                        tags.removeAll { $0 == tag }
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 10))
+                                    }
                                 }
+                                .monoTag()
                             }
                         }
                     }
-                } header: {
-                    Text("Media")
-                }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-                // Tags
-                Section {
-                    FlowLayout(spacing: 6) {
-                        ForEach(tags, id: \.self) { tag in
-                            HStack(spacing: 4) {
-                                Text("#\(tag)")
-                                Button {
-                                    tags.removeAll { $0 == tag }
-                                } label: {
-                                    Image(systemName: "xmark")
-                                        .font(.caption2)
-                                }
-                            }
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundColor(.blue)
-                            .cornerRadius(12)
-                        }
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(.red)
+                            .padding(.horizontal, OceannaTheme.Spacing.lg)
                     }
-
-                    HStack {
-                        TextField("Add tag", text: $newTag)
-                            .textInputAutocapitalization(.never)
-                        Button {
-                            if !newTag.isEmpty {
-                                tags.append(newTag.lowercased())
-                                newTag = ""
-                            }
-                        } label: {
-                            Text("Add")
-                        }
-                        .disabled(newTag.isEmpty)
-                    }
-                } header: {
-                    Text("Tags")
                 }
-
-                // Visibility
-                Section {
-                    Picker("Who can see this?", selection: $visibility) {
-                        ForEach(FeedPost.Visibility.allCases, id: \.self) { vis in
-                            Text(vis.rawValue).tag(vis)
-                        }
-                    }
-                } header: {
-                    Text("Visibility")
-                }
+                .padding(.vertical, OceannaTheme.Spacing.lg)
             }
-            .navigationTitle("Create Post")
+            .background(OceannaTheme.Colors.background)
+            .navigationTitle("New Post")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(OceannaTheme.Colors.primary)
                 }
 
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Post") {
                         createPost()
                     }
-                    .disabled(!isValid || viewModel.isPosting)
-                }
-            }
-            .onChange(of: selectedPhotos) { _, newItems in
-                Task {
-                    selectedImages = []
-                    for item in newItems {
-                        if let data = try? await item.loadTransferable(type: Data.self),
-                           let image = UIImage(data: data) {
-                            selectedImages.append(image)
-                        }
-                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(OceannaTheme.Colors.primary)
+                    .disabled(isLoading || content.isEmpty)
                 }
             }
         }
     }
 
+    private var opportunityFields: some View {
+        VStack(alignment: .leading, spacing: OceannaTheme.Spacing.md) {
+            Text("Opportunity Details")
+                .font(OceannaTheme.Typography.headline)
+                .foregroundColor(OceannaTheme.Colors.primaryText)
+
+            TextField("Budget (e.g., $500-800)", text: $budget)
+                .textFieldStyle(OceannaTextFieldStyle())
+
+            TextField("Timeline (e.g., This weekend)", text: $timeline)
+                .textFieldStyle(OceannaTextFieldStyle())
+
+            VStack(alignment: .leading, spacing: OceannaTheme.Spacing.xs) {
+                Text("Location Preference")
+                    .font(OceannaTheme.Typography.subheadline)
+                    .foregroundColor(OceannaTheme.Colors.secondaryText)
+
+                Picker("Location", selection: $locationPreference) {
+                    ForEach(Availability.allCases, id: \.self) { option in
+                        Text(option.displayName).tag(option)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            VStack(alignment: .leading, spacing: OceannaTheme.Spacing.xs) {
+                Text("Skills Needed")
+                    .font(OceannaTheme.Typography.subheadline)
+                    .foregroundColor(OceannaTheme.Colors.secondaryText)
+
+                HStack {
+                    TextField("Add skill", text: $newSkill)
+                        .textFieldStyle(OceannaTextFieldStyle())
+
+                    Button {
+                        if !newSkill.isEmpty {
+                            skillsNeeded.append(newSkill)
+                            newSkill = ""
+                        }
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(OceannaTheme.Colors.primary)
+                    }
+                }
+
+                FlowLayout(spacing: OceannaTheme.Spacing.xs) {
+                    ForEach(skillsNeeded, id: \.self) { skill in
+                        HStack(spacing: OceannaTheme.Spacing.xxs) {
+                            Text(skill)
+                            Button {
+                                skillsNeeded.removeAll { $0 == skill }
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 10))
+                            }
+                        }
+                        .monoTag()
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, OceannaTheme.Spacing.lg)
+    }
+
     private func createPost() {
-        guard let userId = authViewModel.currentUser?.id else { return }
+        guard let authorId = authService.userProfile?.id else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        var opportunityDetails: OpportunityDetails? = nil
+        if postType == .opportunity {
+            opportunityDetails = OpportunityDetails(
+                budget: budget.isEmpty ? nil : budget,
+                timeline: timeline.isEmpty ? nil : timeline,
+                locationPreference: locationPreference,
+                skillsNeeded: skillsNeeded
+            )
+        }
+
+        let post = FeedPost(
+            authorId: authorId,
+            postType: postType,
+            content: content,
+            tags: tags,
+            opportunityDetails: opportunityDetails
+        )
 
         Task {
-            if isCollaboration {
-                await viewModel.createCollaborationRequest(
-                    authorId: userId,
-                    title: collabTitle,
-                    description: collabDescription,
-                    rolesNeeded: rolesNeeded,
-                    isPaid: isPaid,
-                    deadline: hasDeadline ? deadline : nil,
-                    tags: tags
-                )
-            } else {
-                await viewModel.createPost(
-                    authorId: userId,
-                    content: content,
-                    postType: postType,
-                    images: selectedImages,
-                    tags: tags,
-                    visibility: visibility
-                )
+            do {
+                _ = try await firestoreService.createPost(post)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
             }
-            dismiss()
+            isLoading = false
         }
     }
 }
 
 #Preview {
-    CreatePostView(viewModel: FeedViewModel())
-        .environmentObject(AuthViewModel())
+    CreatePostView()
+        .environmentObject(AuthService.shared)
 }

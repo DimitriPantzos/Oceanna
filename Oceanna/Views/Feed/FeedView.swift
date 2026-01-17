@@ -1,325 +1,265 @@
 import SwiftUI
 
 struct FeedView: View {
-    @StateObject private var viewModel = FeedViewModel()
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var authService: AuthService
+    @StateObject private var connectionService = ConnectionService.shared
+    @StateObject private var firestoreService = FirestoreService.shared
 
-    @State private var showCreatePost = false
-    @State private var selectedFilter: FeedPost.PostType?
+    @State private var posts: [FeedPost] = []
+    @State private var authors: [String: User] = [:]
+    @State private var isLoading = true
+    @State private var showingCreatePost = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 16) {
-                    // Filter chips
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            FilterChip(title: "All", isSelected: selectedFilter == nil) {
-                                selectedFilter = nil
-                                viewModel.filterByType(nil)
-                            }
-
-                            ForEach(FeedPost.PostType.allCases, id: \.self) { type in
-                                FilterChip(title: type.rawValue, isSelected: selectedFilter == type) {
-                                    selectedFilter = type
-                                    viewModel.filterByType(type)
-                                }
+                if isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, OceannaTheme.Spacing.xxxl)
+                } else if posts.isEmpty {
+                    emptyState
+                } else {
+                    LazyVStack(spacing: OceannaTheme.Spacing.lg) {
+                        ForEach(posts) { post in
+                            if let author = authors[post.authorId] {
+                                PostCard(post: post, author: author)
                             }
                         }
-                        .padding(.horizontal)
                     }
-                    .padding(.vertical, 8)
-
-                    // Posts
-                    ForEach(viewModel.filteredPosts) { post in
-                        FeedPostCard(post: post, viewModel: viewModel)
-                            .padding(.horizontal)
-                    }
-
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .padding()
+                    .padding(.vertical, OceannaTheme.Spacing.md)
+                }
+            }
+            .background(OceannaTheme.Colors.background)
+            .navigationTitle("Feed")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingCreatePost = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundColor(OceannaTheme.Colors.primary)
                     }
                 }
             }
-            .navigationTitle("Feed")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showCreatePost = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                    }
-                }
+            .sheet(isPresented: $showingCreatePost) {
+                CreatePostView()
             }
             .refreshable {
-                await viewModel.refreshFeed()
-            }
-            .sheet(isPresented: $showCreatePost) {
-                CreatePostView(viewModel: viewModel)
+                await loadFeed()
             }
             .task {
-                await viewModel.loadFeed()
-            }
-            .overlay {
-                if !viewModel.isLoading && viewModel.posts.isEmpty {
-                    ContentUnavailableView(
-                        "No Posts Yet",
-                        systemImage: "square.stack",
-                        description: Text("Be the first to share something with the community!")
-                    )
-                }
+                await loadFeed()
             }
         }
     }
-}
 
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
+    private var emptyState: some View {
+        VStack(spacing: OceannaTheme.Spacing.md) {
+            Image(systemName: "square.stack")
+                .font(.system(size: 48))
+                .foregroundColor(OceannaTheme.Colors.tertiaryText)
 
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.blue : Color(.systemGray6))
-                .foregroundColor(isSelected ? .white : .primary)
-                .cornerRadius(20)
+            Text("No posts yet")
+                .font(OceannaTheme.Typography.headline)
+                .foregroundColor(OceannaTheme.Colors.primaryText)
+
+            Text("Follow people to see their posts here")
+                .font(OceannaTheme.Typography.subheadline)
+                .foregroundColor(OceannaTheme.Colors.secondaryText)
         }
+        .frame(maxWidth: .infinity)
+        .padding(.top, OceannaTheme.Spacing.xxxl)
+    }
+
+    private func loadFeed() async {
+        guard let userId = authService.userProfile?.id else { return }
+
+        // Get connections
+        await connectionService.fetchConnections(for: userId)
+
+        // Include own posts + connected users' posts
+        var userIds = Array(connectionService.connectedUserIds)
+        userIds.append(userId)
+
+        do {
+            posts = try await firestoreService.fetchPosts(for: userIds)
+
+            // Fetch authors
+            let authorIds = Set(posts.map { $0.authorId })
+            let users = try await firestoreService.fetchUsers(ids: Array(authorIds))
+            authors = Dictionary(uniqueKeysWithValues: users.compactMap { user in
+                guard let id = user.id else { return nil }
+                return (id, user)
+            })
+        } catch {
+            print("Error loading feed: \(error)")
+        }
+
+        isLoading = false
     }
 }
 
-struct FeedPostCard: View {
+struct PostCard: View {
     let post: FeedPost
-    @ObservedObject var viewModel: FeedViewModel
-    @EnvironmentObject var authViewModel: AuthViewModel
-
-    @State private var authorUser: User?
+    let author: User
+    @State private var showingDetail = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
             // Header
-            HStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Text(authorUser?.initials ?? "?")
-                            .font(.headline)
-                            .foregroundColor(.blue)
-                    )
+            HStack(spacing: OceannaTheme.Spacing.sm) {
+                AvatarView(url: author.avatarUrl, initials: author.initials, size: 40)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(authorUser?.displayName ?? "User")
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(author.displayName)
+                        .font(OceannaTheme.Typography.headline)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                    HStack(spacing: 4) {
-                        Text(post.postType.rawValue)
-                            .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(4)
+                    HStack(spacing: OceannaTheme.Spacing.xxs) {
+                        Text(post.postType.displayName)
+                            .font(OceannaTheme.Typography.monoSmall)
+                            .foregroundColor(OceannaTheme.Colors.secondaryText)
 
-                        if let location = post.locationName {
-                            Text(location)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text("·")
+                            .foregroundColor(OceannaTheme.Colors.tertiaryText)
 
-                        Text(formatDate(post.createdAt))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        Text(post.createdAt, style: .relative)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(OceannaTheme.Colors.tertiaryText)
                     }
                 }
 
                 Spacer()
-
-                Menu {
-                    Button("Share", systemImage: "square.and.arrow.up") { }
-                    Button("Report", systemImage: "flag") { }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(.secondary)
-                }
             }
 
             // Content
             Text(post.content)
-                .font(.body)
-
-            // Collaboration Request
-            if let collab = post.collaborationRequest {
-                CollaborationRequestCard(request: collab)
-            }
+                .font(OceannaTheme.Typography.body)
+                .foregroundColor(OceannaTheme.Colors.primaryText)
 
             // Media
-            if !post.mediaUrls.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(post.mediaUrls, id: \.self) { url in
-                            AsyncImage(url: URL(string: url)) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            } placeholder: {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.2))
-                            }
-                            .frame(width: 200, height: 150)
-                            .cornerRadius(12)
-                        }
-                    }
+            if let firstImage = post.mediaUrls.first {
+                AsyncImage(url: URL(string: firstImage)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(OceannaTheme.Colors.secondaryBackground)
                 }
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .clipped()
+                .cornerRadius(OceannaTheme.Radius.sm)
+            }
+
+            // Opportunity Details
+            if post.isOpportunity, let details = post.opportunityDetails {
+                OpportunityDetailsCard(details: details, postId: post.id ?? "")
             }
 
             // Tags
             if !post.tags.isEmpty {
-                FlowLayout(spacing: 6) {
+                FlowLayout(spacing: OceannaTheme.Spacing.xxs) {
                     ForEach(post.tags, id: \.self) { tag in
                         Text("#\(tag)")
-                            .font(.caption)
-                            .foregroundColor(.blue)
+                            .font(OceannaTheme.Typography.monoSmall)
+                            .foregroundColor(OceannaTheme.Colors.secondaryText)
                     }
                 }
             }
-
-            Divider()
-
-            // Actions
-            HStack(spacing: 24) {
-                Button {
-                    if let userId = authViewModel.currentUser?.id {
-                        Task {
-                            await viewModel.likePost(post, userId: userId)
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: isLiked ? "heart.fill" : "heart")
-                            .foregroundColor(isLiked ? .red : .secondary)
-                        Text("\(post.likes.count)")
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                Button {
-                    // Comments
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "bubble.left")
-                        Text("\(post.commentCount)")
-                    }
-                    .foregroundColor(.secondary)
-                }
-
-                Button {
-                    // Share
-                } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
-            .font(.subheadline)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .task {
-            authorUser = try? await FirestoreService.shared.getUser(id: post.authorId)
-        }
-    }
-
-    var isLiked: Bool {
-        guard let userId = authViewModel.currentUser?.id else { return false }
-        return post.likes.contains(userId)
-    }
-
-    func formatDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
+        .padding(OceannaTheme.Spacing.md)
+        .background(OceannaTheme.Colors.background)
+        .overlay(
+            Rectangle()
+                .fill(OceannaTheme.Colors.divider)
+                .frame(height: 1),
+            alignment: .bottom
+        )
     }
 }
 
-struct CollaborationRequestCard: View {
-    let request: FeedPost.CollaborationRequest
+struct OpportunityDetailsCard: View {
+    let details: OpportunityDetails
+    let postId: String
+    @EnvironmentObject var authService: AuthService
+    @StateObject private var firestoreService = FirestoreService.shared
+    @State private var isInterested = false
+    @State private var hasApplied = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "person.3.fill")
-                    .foregroundColor(.blue)
-                Text(request.title)
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
+            HStack(spacing: OceannaTheme.Spacing.md) {
+                if let budget = details.budget {
+                    Label(budget, systemImage: "dollarsign.circle")
+                        .font(OceannaTheme.Typography.mono)
+                }
 
-                Spacer()
+                if let timeline = details.timeline {
+                    Label(timeline, systemImage: "calendar")
+                        .font(OceannaTheme.Typography.mono)
+                }
 
-                if request.isPaid {
-                    Text("Paid")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(.green)
-                        .cornerRadius(4)
+                Label(details.locationPreference.displayName, systemImage: "mappin")
+                    .font(OceannaTheme.Typography.mono)
+            }
+            .foregroundColor(OceannaTheme.Colors.secondaryText)
+
+            if !details.skillsNeeded.isEmpty {
+                FlowLayout(spacing: OceannaTheme.Spacing.xxs) {
+                    ForEach(details.skillsNeeded, id: \.self) { skill in
+                        Text(skill)
+                            .monoTag()
+                    }
                 }
             }
 
-            Text(request.description)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            Text("Looking for:")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            FlowLayout(spacing: 6) {
-                ForEach(request.rolesNeeded, id: \.self) { role in
-                    Text(role)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.orange.opacity(0.1))
-                        .foregroundColor(.orange)
-                        .cornerRadius(8)
+            HStack(spacing: OceannaTheme.Spacing.md) {
+                Button {
+                    expressInterest()
+                } label: {
+                    Text(isInterested ? "Interested" : "I'm Interested")
+                        .frame(maxWidth: .infinity)
                 }
-            }
+                .oceannaButton(isPrimary: false)
+                .disabled(isInterested)
 
-            if let deadline = request.deadline {
-                HStack {
-                    Image(systemName: "calendar")
-                    Text("Apply by \(deadline.formatted(date: .abbreviated, time: .omitted))")
+                Button {
+                    apply()
+                } label: {
+                    Text(hasApplied ? "Applied" : "Apply")
+                        .frame(maxWidth: .infinity)
                 }
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .oceannaButton(isPrimary: true)
+                .disabled(hasApplied)
             }
-
-            Button("Apply to Collaborate") {
-                // Apply action
-            }
-            .font(.subheadline)
-            .fontWeight(.medium)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
         }
-        .padding()
-        .background(Color.blue.opacity(0.05))
-        .cornerRadius(12)
+        .padding(OceannaTheme.Spacing.md)
+        .background(OceannaTheme.Colors.secondaryBackground)
+        .cornerRadius(OceannaTheme.Radius.sm)
+    }
+
+    private func expressInterest() {
+        guard let userId = authService.userProfile?.id else { return }
+        Task {
+            try? await firestoreService.expressInterest(postId: postId, userId: userId)
+            isInterested = true
+        }
+    }
+
+    private func apply() {
+        guard let userId = authService.userProfile?.id else { return }
+        Task {
+            try? await firestoreService.applyToOpportunity(postId: postId, userId: userId)
+            hasApplied = true
+        }
     }
 }
 
 #Preview {
     FeedView()
-        .environmentObject(AuthViewModel())
+        .environmentObject(AuthService.shared)
 }
