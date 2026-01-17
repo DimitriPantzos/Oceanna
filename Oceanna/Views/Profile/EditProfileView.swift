@@ -1,226 +1,218 @@
 import SwiftUI
-import PhotosUI
 
 struct EditProfileView: View {
-    @Environment(\.dismiss) var dismiss
-    @ObservedObject var viewModel: ProfileViewModel
+    @EnvironmentObject var authService: AuthService
+    @Environment(\.dismiss) private var dismiss
 
-    @State private var displayName: String = ""
-    @State private var bio: String = ""
-    @State private var selectedPhoto: PhotosPickerItem?
-    @State private var selectedImage: UIImage?
-
-    // Freelancer fields
+    @State private var displayName = ""
+    @State private var city = ""
+    @State private var bio = ""
     @State private var skills: [String] = []
+    @State private var lookingFor: [String] = []
+    @State private var availability: Availability = .both
     @State private var newSkill = ""
-    @State private var hourlyRate: String = ""
-    @State private var locationRadius: Double = 25
-    @State private var isAvailable = true
-
-    // Client fields
-    @State private var businessName: String = ""
-    @State private var industry: String = ""
+    @State private var newLookingFor = ""
+    @State private var isLoading = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
-            Form {
-                // Avatar Section
-                Section {
-                    HStack {
-                        Spacer()
-                        PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                            if let image = selectedImage {
-                                Image(uiImage: image)
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 100, height: 100)
-                                    .clipShape(Circle())
-                            } else if let avatarUrl = viewModel.user?.avatarUrl, let url = URL(string: avatarUrl) {
-                                AsyncImage(url: url) { image in
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                } placeholder: {
-                                    avatarPlaceholder
-                                }
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                            } else {
-                                avatarPlaceholder
-                            }
-                        }
-                        Spacer()
+            ScrollView {
+                VStack(spacing: OceannaTheme.Spacing.lg) {
+                    // Basic Info
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.md) {
+                        Text("Basic Info")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                        TextField("Display Name", text: $displayName)
+                            .textFieldStyle(OceannaTextFieldStyle())
+
+                        TextField("City, State", text: $city)
+                            .textFieldStyle(OceannaTextFieldStyle())
+
+                        TextField("Bio", text: $bio, axis: .vertical)
+                            .textFieldStyle(OceannaTextFieldStyle())
+                            .lineLimit(3...6)
                     }
-                } header: {
-                    Text("Profile Photo")
-                }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-                // Basic Info
-                Section {
-                    TextField("Display Name", text: $displayName)
-                    TextField("Bio", text: $bio, axis: .vertical)
-                        .lineLimit(3...6)
-                } header: {
-                    Text("Basic Info")
-                }
-
-                // Freelancer-specific fields
-                if viewModel.user?.userType == .freelancer {
-                    Section {
-                        HStack {
-                            Text("$")
-                            TextField("Hourly Rate", text: $hourlyRate)
-                                .keyboardType(.decimalPad)
-                            Text("/ hour")
-                                .foregroundColor(.secondary)
-                        }
-
-                        Toggle("Available for Work", isOn: $isAvailable)
-
-                        VStack(alignment: .leading) {
-                            Text("Location Radius: \(Int(locationRadius)) miles")
-                            Slider(value: $locationRadius, in: 5...100, step: 5)
-                        }
-                    } header: {
-                        Text("Work Preferences")
-                    }
-
-                    Section {
-                        ForEach(skills, id: \.self) { skill in
-                            HStack {
-                                Text(skill)
-                                Spacer()
-                                Button {
-                                    skills.removeAll { $0 == skill }
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
+                    // Skills
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.md) {
+                        Text("Skills")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
 
                         HStack {
                             TextField("Add skill", text: $newSkill)
+                                .textFieldStyle(OceannaTextFieldStyle())
+
                             Button {
-                                if !newSkill.isEmpty && !skills.contains(newSkill) {
+                                if !newSkill.isEmpty {
                                     skills.append(newSkill)
                                     newSkill = ""
                                 }
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(.blue)
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OceannaTheme.Colors.primary)
                             }
-                            .disabled(newSkill.isEmpty)
                         }
-                    } header: {
-                        Text("Skills")
-                    }
-                }
 
-                // Client-specific fields
-                if viewModel.user?.userType == .client {
-                    Section {
-                        TextField("Business Name", text: $businessName)
-                        TextField("Industry", text: $industry)
-                    } header: {
-                        Text("Business Info")
+                        FlowLayout(spacing: OceannaTheme.Spacing.xs) {
+                            ForEach(skills, id: \.self) { skill in
+                                HStack(spacing: OceannaTheme.Spacing.xxs) {
+                                    Text(skill)
+                                    Button {
+                                        skills.removeAll { $0 == skill }
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 10))
+                                    }
+                                }
+                                .monoTag()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                    // Looking For
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.md) {
+                        Text("Looking For")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                        HStack {
+                            TextField("Add what you're looking for", text: $newLookingFor)
+                                .textFieldStyle(OceannaTextFieldStyle())
+
+                            Button {
+                                if !newLookingFor.isEmpty {
+                                    lookingFor.append(newLookingFor)
+                                    newLookingFor = ""
+                                }
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(OceannaTheme.Colors.primary)
+                            }
+                        }
+
+                        FlowLayout(spacing: OceannaTheme.Spacing.xs) {
+                            ForEach(lookingFor, id: \.self) { item in
+                                HStack(spacing: OceannaTheme.Spacing.xxs) {
+                                    Text(item)
+                                    Button {
+                                        lookingFor.removeAll { $0 == item }
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 10))
+                                    }
+                                }
+                                .monoTag()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                    // Availability
+                    VStack(alignment: .leading, spacing: OceannaTheme.Spacing.md) {
+                        Text("Availability")
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
+
+                        ForEach(Availability.allCases, id: \.self) { option in
+                            Button {
+                                availability = option
+                            } label: {
+                                HStack {
+                                    Text(option.displayName)
+                                        .font(OceannaTheme.Typography.body)
+                                        .foregroundColor(OceannaTheme.Colors.primaryText)
+                                    Spacer()
+                                    if availability == option {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(OceannaTheme.Colors.primary)
+                                    }
+                                }
+                                .padding(OceannaTheme.Spacing.md)
+                                .background(OceannaTheme.Colors.secondaryBackground)
+                                .cornerRadius(OceannaTheme.Radius.sm)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(.red)
                     }
                 }
+                .padding(.vertical, OceannaTheme.Spacing.lg)
             }
+            .background(OceannaTheme.Colors.background)
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .foregroundColor(OceannaTheme.Colors.primary)
                 }
 
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Save") {
-                        saveProfile()
+                        save()
                     }
-                    .disabled(viewModel.isSaving)
-                }
-            }
-            .onChange(of: selectedPhoto) { _, newValue in
-                Task {
-                    if let data = try? await newValue?.loadTransferable(type: Data.self),
-                       let image = UIImage(data: data) {
-                        selectedImage = image
-                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(OceannaTheme.Colors.primary)
+                    .disabled(isLoading)
                 }
             }
             .onAppear {
-                loadCurrentValues()
+                loadCurrentProfile()
             }
         }
     }
 
-    private var avatarPlaceholder: some View {
-        Circle()
-            .fill(Color.blue.opacity(0.2))
-            .frame(width: 100, height: 100)
-            .overlay(
-                Image(systemName: "camera.fill")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-            )
+    private func loadCurrentProfile() {
+        guard let user = authService.userProfile else { return }
+        displayName = user.displayName
+        city = user.city
+        bio = user.bio ?? ""
+        skills = user.skills
+        lookingFor = user.lookingFor
+        availability = user.availability
     }
 
-    private func loadCurrentValues() {
-        if let user = viewModel.user {
-            displayName = user.displayName
-            bio = user.bio ?? ""
-        }
+    private func save() {
+        guard var user = authService.userProfile else { return }
 
-        if let profile = viewModel.freelancerProfile {
-            skills = profile.skills
-            hourlyRate = profile.hourlyRate.map { String(format: "%.0f", $0) } ?? ""
-            locationRadius = profile.locationRadius
-            isAvailable = profile.availability.isAvailable
-        }
+        isLoading = true
+        errorMessage = nil
 
-        if let profile = viewModel.clientProfile {
-            businessName = profile.businessName ?? ""
-            industry = profile.industry ?? ""
-        }
-    }
+        user.displayName = displayName
+        user.city = city
+        user.bio = bio.isEmpty ? nil : bio
+        user.skills = skills
+        user.lookingFor = lookingFor
+        user.availability = availability
 
-    private func saveProfile() {
         Task {
-            // Update avatar if changed
-            if let image = selectedImage {
-                await viewModel.updateAvatar(image: image)
+            do {
+                try await authService.updateUserProfile(user)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
             }
-
-            // Update user
-            if var user = viewModel.user {
-                user.displayName = displayName
-                user.bio = bio.isEmpty ? nil : bio
-                await viewModel.updateUser(user)
-            }
-
-            // Update type-specific profile
-            if var profile = viewModel.freelancerProfile {
-                profile.skills = skills
-                profile.hourlyRate = Double(hourlyRate)
-                profile.locationRadius = locationRadius
-                profile.availability.isAvailable = isAvailable
-                await viewModel.updateFreelancerProfile(profile)
-            }
-
-            if var profile = viewModel.clientProfile {
-                profile.businessName = businessName.isEmpty ? nil : businessName
-                profile.industry = industry.isEmpty ? nil : industry
-                await viewModel.updateClientProfile(profile)
-            }
-
-            dismiss()
+            isLoading = false
         }
     }
 }
 
 #Preview {
-    EditProfileView(viewModel: ProfileViewModel())
+    EditProfileView()
+        .environmentObject(AuthService.shared)
 }
