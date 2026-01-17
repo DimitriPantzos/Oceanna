@@ -9,6 +9,7 @@ enum AuthError: LocalizedError {
     case invalidCredentials
     case userNotFound
     case networkError
+    case notApproved
     case unknown(String)
 
     var errorDescription: String? {
@@ -25,6 +26,8 @@ enum AuthError: LocalizedError {
             return "No account found with this email."
         case .networkError:
             return "Network error. Please check your connection."
+        case .notApproved:
+            return "Your profile is pending review."
         case .unknown(let message):
             return message
         }
@@ -42,6 +45,22 @@ class AuthService: ObservableObject {
     private let auth = Auth.auth()
     private let db = Firestore.firestore()
     private var authStateListener: AuthStateDidChangeListenerHandle?
+
+    var isAuthenticated: Bool {
+        currentUser != nil
+    }
+
+    var isApproved: Bool {
+        userProfile?.approvalStatus == .approved
+    }
+
+    var isPending: Bool {
+        userProfile?.approvalStatus == .pending
+    }
+
+    var isWaitlisted: Bool {
+        userProfile?.approvalStatus == .waitlisted
+    }
 
     init() {
         setupAuthStateListener()
@@ -68,37 +87,25 @@ class AuthService: ObservableObject {
 
     // MARK: - Authentication Methods
 
-    func signUp(email: String, password: String, displayName: String, userType: UserType) async throws -> User {
+    func signUp(email: String, password: String, displayName: String) async throws -> User {
         isLoading = true
         defer { isLoading = false }
 
         do {
             let result = try await auth.createUser(withEmail: email, password: password)
 
-            // Update display name
             let changeRequest = result.user.createProfileChangeRequest()
             changeRequest.displayName = displayName
             try await changeRequest.commitChanges()
 
-            // Create user profile in Firestore
             let user = User(
                 id: result.user.uid,
                 email: email,
                 displayName: displayName,
-                userType: userType,
-                isVerified: false,
-                createdAt: Date()
+                approvalStatus: .pending
             )
 
             try await createUserProfile(user)
-
-            // Create type-specific profile
-            if userType == .freelancer {
-                try await createFreelancerProfile(userId: result.user.uid)
-            } else {
-                try await createClientProfile(userId: result.user.uid)
-            }
-
             userProfile = user
             return user
         } catch let error as NSError {
@@ -128,20 +135,7 @@ class AuthService: ObservableObject {
 
     func deleteAccount() async throws {
         guard let user = currentUser else { return }
-
-        // Delete user data from Firestore
         try await db.collection("users").document(user.uid).delete()
-
-        // Delete type-specific profile
-        if let profile = userProfile {
-            if profile.userType == .freelancer {
-                try await db.collection("freelancerProfiles").document(user.uid).delete()
-            } else {
-                try await db.collection("clientProfiles").document(user.uid).delete()
-            }
-        }
-
-        // Delete Firebase Auth account
         try await user.delete()
     }
 
@@ -150,16 +144,6 @@ class AuthService: ObservableObject {
     private func createUserProfile(_ user: User) async throws {
         guard let userId = user.id else { return }
         try db.collection("users").document(userId).setData(from: user)
-    }
-
-    private func createFreelancerProfile(userId: String) async throws {
-        let profile = FreelancerProfile(userId: userId)
-        try db.collection("freelancerProfiles").document(userId).setData(from: profile)
-    }
-
-    private func createClientProfile(userId: String) async throws {
-        let profile = ClientProfile(userId: userId)
-        try db.collection("clientProfiles").document(userId).setData(from: profile)
     }
 
     func fetchUserProfile(userId: String) async {
@@ -175,6 +159,22 @@ class AuthService: ObservableObject {
         guard let userId = user.id else { return }
         try db.collection("users").document(userId).setData(from: user, merge: true)
         userProfile = user
+    }
+
+    func updateHireableStatus(_ isHireable: Bool) async throws {
+        guard var profile = userProfile else { return }
+        profile.isHireable = isHireable
+        try await updateUserProfile(profile)
+    }
+
+    func completeOnboarding(city: String, skills: [String], lookingFor: [String], availability: Availability, isHireable: Bool) async throws {
+        guard var profile = userProfile else { return }
+        profile.city = city
+        profile.skills = skills
+        profile.lookingFor = lookingFor
+        profile.availability = availability
+        profile.isHireable = isHireable
+        try await updateUserProfile(profile)
     }
 
     // MARK: - Helper Methods
