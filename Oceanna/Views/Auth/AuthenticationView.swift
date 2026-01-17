@@ -5,34 +5,45 @@ struct AuthenticationView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 16) {
-                    Image(systemName: "link.circle.fill")
-                        .font(.system(size: 80))
-                        .foregroundStyle(.blue)
+            VStack(spacing: OceannaTheme.Spacing.xl) {
+                Spacer()
 
+                // Logo/Brand
+                VStack(spacing: OceannaTheme.Spacing.sm) {
                     Text("Oceanna")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .font(OceannaTheme.Typography.largeTitle)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                    Text("Connect with local creative talent")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 60)
-                .padding(.bottom, 40)
-
-                // Content
-                if isShowingSignUp {
-                    SignUpView(isShowingSignUp: $isShowingSignUp)
-                } else {
-                    SignInView(isShowingSignUp: $isShowingSignUp)
+                    Text("Where talent meets talent")
+                        .font(OceannaTheme.Typography.subheadline)
+                        .foregroundColor(OceannaTheme.Colors.secondaryText)
                 }
 
                 Spacer()
+
+                // Actions
+                VStack(spacing: OceannaTheme.Spacing.md) {
+                    NavigationLink {
+                        SignUpView()
+                    } label: {
+                        Text("Get Started")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .oceannaButton(isPrimary: true)
+
+                    NavigationLink {
+                        SignInView()
+                    } label: {
+                        Text("Sign In")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .oceannaButton(isPrimary: false)
+                }
+                .padding(.horizontal, OceannaTheme.Spacing.lg)
+
+                Spacer().frame(height: OceannaTheme.Spacing.xxxl)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(OceannaTheme.Colors.background)
         }
     }
 }
