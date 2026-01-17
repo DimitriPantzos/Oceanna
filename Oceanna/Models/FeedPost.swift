@@ -1,141 +1,115 @@
 import Foundation
 import FirebaseFirestore
 
-struct FeedPost: Identifiable, Codable {
-    @DocumentID var id: String?
-    var authorId: String
-    var content: String
-    var postType: PostType
-    var mediaUrls: [String]
-    var createdAt: Date
-    var updatedAt: Date
-    var likes: [String] // User IDs who liked
-    var commentCount: Int
-    var shareCount: Int
-    var tags: [String]
-    var location: GeoPoint?
-    var locationName: String?
-    var visibility: Visibility
-    var linkedProjectId: String?
-    var collaborationRequest: CollaborationRequest?
+enum PostType: String, Codable, CaseIterable {
+    case portfolio = "portfolio"
+    case update = "update"
+    case wip = "wip"
+    case opportunity = "opportunity"
+    case collaboration = "collaboration"
+    case milestone = "milestone"
+    case question = "question"
 
-    enum PostType: String, Codable, CaseIterable {
-        case update = "Update"
-        case portfolio = "Portfolio"
-        case workInProgress = "Work in Progress"
-        case collaborationRequest = "Collab Request"
-        case opportunity = "Opportunity"
-        case event = "Event"
-        case milestone = "Milestone"
+    var displayName: String {
+        switch self {
+        case .portfolio: return "Work"
+        case .update: return "Update"
+        case .wip: return "In Progress"
+        case .opportunity: return "Opportunity"
+        case .collaboration: return "Collab"
+        case .milestone: return "Milestone"
+        case .question: return "Question"
+        }
     }
 
-    enum Visibility: String, Codable, CaseIterable {
-        case publicPost = "Public"
-        case connectionsOnly = "Connections Only"
-        case localOnly = "Local Only"
-    }
-
-    struct CollaborationRequest: Codable {
-        var title: String
-        var description: String
-        var rolesNeeded: [String]
-        var isPaid: Bool
-        var deadline: Date?
-        var applicants: [String]
-    }
-
-    init(
-        id: String? = nil,
-        authorId: String,
-        content: String,
-        postType: PostType = .update,
-        mediaUrls: [String] = [],
-        createdAt: Date = Date(),
-        updatedAt: Date = Date(),
-        likes: [String] = [],
-        commentCount: Int = 0,
-        shareCount: Int = 0,
-        tags: [String] = [],
-        location: GeoPoint? = nil,
-        locationName: String? = nil,
-        visibility: Visibility = .publicPost,
-        linkedProjectId: String? = nil,
-        collaborationRequest: CollaborationRequest? = nil
-    ) {
-        self.id = id
-        self.authorId = authorId
-        self.content = content
-        self.postType = postType
-        self.mediaUrls = mediaUrls
-        self.createdAt = createdAt
-        self.updatedAt = updatedAt
-        self.likes = likes
-        self.commentCount = commentCount
-        self.shareCount = shareCount
-        self.tags = tags
-        self.location = location
-        self.locationName = locationName
-        self.visibility = visibility
-        self.linkedProjectId = linkedProjectId
-        self.collaborationRequest = collaborationRequest
+    var icon: String {
+        switch self {
+        case .portfolio: return "photo"
+        case .update: return "text.bubble"
+        case .wip: return "hammer"
+        case .opportunity: return "briefcase"
+        case .collaboration: return "person.2"
+        case .milestone: return "star"
+        case .question: return "questionmark.circle"
+        }
     }
 }
 
-struct Comment: Identifiable, Codable {
+struct OpportunityDetails: Codable {
+    var budget: String?
+    var timeline: String?
+    var locationPreference: Availability
+    var skillsNeeded: [String]
+
+    init(budget: String? = nil, timeline: String? = nil, locationPreference: Availability = .both, skillsNeeded: [String] = []) {
+        self.budget = budget
+        self.timeline = timeline
+        self.locationPreference = locationPreference
+        self.skillsNeeded = skillsNeeded
+    }
+}
+
+struct FeedPost: Identifiable, Codable {
     @DocumentID var id: String?
-    var postId: String
     var authorId: String
+    var postType: PostType
     var content: String
+    var mediaUrls: [String]
+    var tags: [String]
+    var opportunityDetails: OpportunityDetails?
+    var interestedUserIds: [String]
+    var applicantIds: [String]
     var createdAt: Date
-    var likes: [String]
-    var parentCommentId: String? // For replies
 
     init(
         id: String? = nil,
-        postId: String,
         authorId: String,
+        postType: PostType,
         content: String,
-        createdAt: Date = Date(),
-        likes: [String] = [],
-        parentCommentId: String? = nil
+        mediaUrls: [String] = [],
+        tags: [String] = [],
+        opportunityDetails: OpportunityDetails? = nil,
+        interestedUserIds: [String] = [],
+        applicantIds: [String] = [],
+        createdAt: Date = Date()
     ) {
         self.id = id
-        self.postId = postId
         self.authorId = authorId
+        self.postType = postType
         self.content = content
+        self.mediaUrls = mediaUrls
+        self.tags = tags
+        self.opportunityDetails = opportunityDetails
+        self.interestedUserIds = interestedUserIds
+        self.applicantIds = applicantIds
         self.createdAt = createdAt
-        self.likes = likes
-        self.parentCommentId = parentCommentId
+    }
+
+    var isOpportunity: Bool {
+        postType == .opportunity
     }
 }
 
 extension FeedPost {
-    static let example = FeedPost(
-        id: "post123",
+    static let portfolioExample = FeedPost(
+        id: "post1",
         authorId: "user123",
-        content: "Just finished this brand identity project for a local bakery! Loved working with natural, warm colors. What do you think?",
         postType: .portfolio,
-        mediaUrls: ["https://example.com/image1.jpg"],
-        likes: ["user456", "user789"],
-        commentCount: 5,
-        tags: ["branding", "design", "logo"],
-        locationName: "Austin, TX"
+        content: "Just wrapped up this brand identity project. Really happy with how the color palette came together.",
+        mediaUrls: ["https://example.com/work1.jpg"],
+        tags: ["Branding", "Identity"]
     )
 
-    static let collabExample = FeedPost(
-        id: "post456",
-        authorId: "user123",
-        content: "Looking for collaborators for an upcoming music video shoot!",
-        postType: .collaborationRequest,
-        tags: ["video", "music", "collaboration"],
-        locationName: "Los Angeles, CA",
-        collaborationRequest: CollaborationRequest(
-            title: "Music Video Shoot",
-            description: "Need a cinematographer and editor for a 3-day shoot",
-            rolesNeeded: ["Cinematographer", "Video Editor", "Colorist"],
-            isPaid: true,
-            deadline: Calendar.current.date(byAdding: .day, value: 14, to: Date()),
-            applicants: []
+    static let opportunityExample = FeedPost(
+        id: "post2",
+        authorId: "user456",
+        postType: .opportunity,
+        content: "Looking for a photographer for a product shoot this Saturday. Natural light, minimal aesthetic.",
+        opportunityDetails: OpportunityDetails(
+            budget: "$500-800",
+            timeline: "This weekend",
+            locationPreference: .inPerson,
+            skillsNeeded: ["Product Photography", "Lighting"]
         )
     )
 }
