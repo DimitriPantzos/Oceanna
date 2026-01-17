@@ -1,87 +1,47 @@
 import SwiftUI
 
 struct AvatarView: View {
-    let user: User?
-    var size: CGFloat = 50
+    let url: String?
+    let initials: String
+    let size: CGFloat
 
     var body: some View {
-        if let avatarUrl = user?.avatarUrl, let url = URL(string: avatarUrl) {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .empty:
-                    placeholder
-                case .success(let image):
+        Group {
+            if let urlString = url, let imageUrl = URL(string: urlString) {
+                AsyncImage(url: imageUrl) { image in
                     image
                         .resizable()
-                        .scaledToFill()
-                case .failure:
-                    placeholder
-                @unknown default:
-                    placeholder
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    initialsView
                 }
+            } else {
+                initialsView
             }
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-        } else {
-            placeholder
         }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(OceannaTheme.Colors.border, lineWidth: 1)
+        )
     }
 
-    private var placeholder: some View {
-        Circle()
-            .fill(Color.blue.opacity(0.2))
-            .frame(width: size, height: size)
-            .overlay(
-                Text(user?.initials ?? "?")
-                    .font(.system(size: size * 0.4))
-                    .fontWeight(.medium)
-                    .foregroundColor(.blue)
-            )
-    }
-}
+    private var initialsView: some View {
+        ZStack {
+            Circle()
+                .fill(OceannaTheme.Colors.secondaryBackground)
 
-struct AvatarGroupView: View {
-    let users: [User]
-    var maxDisplay: Int = 3
-    var size: CGFloat = 32
-
-    var body: some View {
-        HStack(spacing: -size * 0.3) {
-            ForEach(Array(users.prefix(maxDisplay).enumerated()), id: \.element.id) { index, user in
-                AvatarView(user: user, size: size)
-                    .overlay(
-                        Circle()
-                            .stroke(Color(.systemBackground), lineWidth: 2)
-                    )
-                    .zIndex(Double(maxDisplay - index))
-            }
-
-            if users.count > maxDisplay {
-                Circle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: size, height: size)
-                    .overlay(
-                        Text("+\(users.count - maxDisplay)")
-                            .font(.system(size: size * 0.35))
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                    )
-                    .overlay(
-                        Circle()
-                            .stroke(Color(.systemBackground), lineWidth: 2)
-                    )
-            }
+            Text(initials)
+                .font(.system(size: size * 0.4, weight: .medium))
+                .foregroundColor(OceannaTheme.Colors.tertiaryText)
         }
     }
 }
 
 #Preview {
     VStack(spacing: 20) {
-        AvatarView(user: .example)
-        AvatarView(user: .example, size: 80)
-        AvatarView(user: nil, size: 60)
-
-        AvatarGroupView(users: [.example, .example, .example, .example, .example])
+        AvatarView(url: nil, initials: "SC", size: 100)
+        AvatarView(url: nil, initials: "JD", size: 50)
     }
-    .padding()
 }

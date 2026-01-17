@@ -2,119 +2,93 @@ import SwiftUI
 
 struct ReviewCard: View {
     let review: Review
-
+    @StateObject private var firestoreService = FirestoreService.shared
     @State private var reviewer: User?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: OceannaTheme.Spacing.sm) {
             // Header
-            HStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Text(reviewer?.initials ?? "?")
-                            .font(.subheadline)
-                            .foregroundColor(.blue)
-                    )
+            HStack(spacing: OceannaTheme.Spacing.sm) {
+                if let reviewer = reviewer {
+                    AvatarView(url: reviewer.avatarUrl, initials: reviewer.initials, size: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(reviewer?.displayName ?? "User")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(reviewer.displayName)
+                            .font(OceannaTheme.Typography.headline)
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                    Text(formatDate(review.createdAt))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        Text(review.createdAt, style: .date)
+                            .font(OceannaTheme.Typography.caption)
+                            .foregroundColor(OceannaTheme.Colors.tertiaryText)
+                    }
                 }
 
                 Spacer()
 
-                // Rating
-                HStack(spacing: 2) {
-                    ForEach(0..<5) { index in
-                        Image(systemName: index < Int(review.rating) ? "star.fill" : "star")
-                            .font(.caption)
-                            .foregroundColor(.orange)
-                    }
+                // Average rating
+                HStack(spacing: OceannaTheme.Spacing.xxs) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 12))
+                    Text(String(format: "%.1f", review.averageRating))
+                        .font(OceannaTheme.Typography.mono)
                 }
+                .foregroundColor(OceannaTheme.Colors.primaryText)
             }
 
-            // Title
-            if let title = review.title {
-                Text(title)
-                    .font(.headline)
+            // Category ratings
+            HStack(spacing: OceannaTheme.Spacing.md) {
+                CategoryRating(label: "Quality", rating: review.qualityRating)
+                CategoryRating(label: "Communication", rating: review.communicationRating)
+                CategoryRating(label: "Timeliness", rating: review.timelinessRating)
             }
 
             // Content
-            Text(review.content)
-                .font(.body)
-                .foregroundColor(.secondary)
-
-            // Category Ratings
-            if !review.categories.isEmpty {
-                HStack(spacing: 12) {
-                    ForEach(review.categories, id: \.category) { categoryRating in
-                        VStack(spacing: 2) {
-                            Text(String(format: "%.1f", categoryRating.rating))
-                                .font(.caption)
-                                .fontWeight(.bold)
-                            Text(categoryRating.category)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                }
+            if let content = review.content {
+                Text(content)
+                    .font(OceannaTheme.Typography.body)
+                    .foregroundColor(OceannaTheme.Colors.secondaryText)
             }
 
-            // Response
-            if let response = review.response {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Response:")
-                        .font(.caption)
-                        .fontWeight(.medium)
-
-                    Text(response.content)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+            // Verified badge
+            HStack(spacing: OceannaTheme.Spacing.xxs) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 12))
+                Text("Verified")
+                    .font(OceannaTheme.Typography.monoSmall)
             }
-
-            // Helpful
-            HStack {
-                Button {
-                    // Mark as helpful
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "hand.thumbsup")
-                        Text("Helpful (\(review.helpfulCount))")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-
-                Spacer()
-            }
+            .foregroundColor(OceannaTheme.Colors.tertiaryText)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .padding(OceannaTheme.Spacing.md)
+        .background(OceannaTheme.Colors.secondaryBackground)
+        .cornerRadius(OceannaTheme.Radius.md)
         .task {
-            reviewer = try? await FirestoreService.shared.getUser(id: review.reviewerId)
+            do {
+                reviewer = try await firestoreService.fetchUser(id: review.reviewerId)
+            } catch {
+                print("Error fetching reviewer: \(error)")
+            }
         }
     }
+}
 
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+struct CategoryRating: View {
+    let label: String
+    let rating: Int
+
+    var body: some View {
+        VStack(spacing: OceannaTheme.Spacing.xxs) {
+            Text("\(rating)")
+                .font(OceannaTheme.Typography.headline)
+                .foregroundColor(OceannaTheme.Colors.primaryText)
+
+            Text(label)
+                .font(OceannaTheme.Typography.monoSmall)
+                .foregroundColor(OceannaTheme.Colors.tertiaryText)
+        }
     }
 }
 
 #Preview {
-    ReviewCard(review: .clientReviewExample)
+    ReviewCard(review: Review.example)
         .padding()
 }
