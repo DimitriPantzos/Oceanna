@@ -1,178 +1,103 @@
 import SwiftUI
 
 struct SignUpView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @Binding var isShowingSignUp: Bool
+    @EnvironmentObject var authService: AuthService
+    @Environment(\.dismiss) private var dismiss
 
     @State private var email = ""
     @State private var password = ""
-    @State private var confirmPassword = ""
     @State private var displayName = ""
-    @State private var userType: UserType = .freelancer
-
-    var isFormValid: Bool {
-        !email.isEmpty &&
-        !password.isEmpty &&
-        password == confirmPassword &&
-        password.count >= 6 &&
-        !displayName.isEmpty
-    }
-
-    var passwordsMatch: Bool {
-        password == confirmPassword || confirmPassword.isEmpty
-    }
+    @State private var errorMessage: String?
+    @State private var isLoading = false
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
-                // User Type Selection
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("I am a...")
-                        .font(.headline)
+            VStack(spacing: OceannaTheme.Spacing.xl) {
+                VStack(spacing: OceannaTheme.Spacing.sm) {
+                    Text("Create Account")
+                        .font(OceannaTheme.Typography.title)
+                        .foregroundColor(OceannaTheme.Colors.primaryText)
 
-                    HStack(spacing: 12) {
-                        UserTypeButton(
-                            title: "Freelancer",
-                            subtitle: "Offer my services",
-                            icon: "person.fill",
-                            isSelected: userType == .freelancer
-                        ) {
-                            userType = .freelancer
-                        }
-
-                        UserTypeButton(
-                            title: "Client",
-                            subtitle: "Hire talent",
-                            icon: "briefcase.fill",
-                            isSelected: userType == .client
-                        ) {
-                            userType = .client
-                        }
-                    }
+                    Text("Join the creative community")
+                        .font(OceannaTheme.Typography.subheadline)
+                        .foregroundColor(OceannaTheme.Colors.secondaryText)
                 }
-                .padding(.horizontal)
+                .padding(.top, OceannaTheme.Spacing.xl)
 
-                // Form Fields
-                VStack(spacing: 16) {
+                VStack(spacing: OceannaTheme.Spacing.md) {
                     TextField("Full Name", text: $displayName)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(OceannaTextFieldStyle())
                         .textContentType(.name)
+                        .autocapitalization(.words)
 
                     TextField("Email", text: $email)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(OceannaTextFieldStyle())
                         .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
                         .autocapitalization(.none)
+                        .keyboardType(.emailAddress)
 
                     SecureField("Password", text: $password)
-                        .textFieldStyle(.roundedBorder)
+                        .textFieldStyle(OceannaTextFieldStyle())
                         .textContentType(.newPassword)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        SecureField("Confirm Password", text: $confirmPassword)
-                            .textFieldStyle(.roundedBorder)
-                            .textContentType(.newPassword)
-
-                        if !passwordsMatch {
-                            Text("Passwords don't match")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-                    }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-                // Sign Up Button
+                if let error = errorMessage {
+                    Text(error)
+                        .font(OceannaTheme.Typography.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, OceannaTheme.Spacing.lg)
+                }
+
                 Button {
-                    Task {
-                        await authViewModel.signUp(
-                            email: email,
-                            password: password,
-                            displayName: displayName,
-                            userType: userType
-                        )
-                    }
+                    signUp()
                 } label: {
-                    if authViewModel.isLoading {
+                    if isLoading {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .tint(.white)
+                            .frame(maxWidth: .infinity)
                     } else {
                         Text("Create Account")
+                            .frame(maxWidth: .infinity)
                     }
                 }
-                .primaryButtonStyle()
-                .padding(.horizontal)
-                .disabled(!isFormValid || authViewModel.isLoading)
+                .oceannaButton(isPrimary: true)
+                .disabled(isLoading || !isValid)
+                .padding(.horizontal, OceannaTheme.Spacing.lg)
 
-                // Terms
-                Text("By creating an account, you agree to our Terms of Service and Privacy Policy")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-
-                Divider()
-                    .padding(.vertical)
-
-                // Switch to Sign In
-                VStack(spacing: 12) {
-                    Text("Already have an account?")
-                        .foregroundColor(.secondary)
-
-                    Button("Sign In") {
-                        withAnimation {
-                            isShowingSignUp = false
-                        }
-                    }
-                    .font(.headline)
-                }
+                Spacer()
             }
-            .padding(.vertical)
         }
-        .alert("Error", isPresented: $authViewModel.showError) {
-            Button("OK") {
-                authViewModel.clearError()
-            }
-        } message: {
-            Text(authViewModel.errorMessage ?? "An error occurred")
-        }
+        .background(OceannaTheme.Colors.background)
+        .navigationBarTitleDisplayMode(.inline)
     }
-}
 
-struct UserTypeButton: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let isSelected: Bool
-    let action: () -> Void
+    private var isValid: Bool {
+        !email.isEmpty && !password.isEmpty && !displayName.isEmpty && password.count >= 6
+    }
 
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
+    private func signUp() {
+        isLoading = true
+        errorMessage = nil
 
-                Text(title)
-                    .font(.headline)
-
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+        Task {
+            do {
+                _ = try await authService.signUp(
+                    email: email,
+                    password: password,
+                    displayName: displayName
+                )
+            } catch {
+                errorMessage = error.localizedDescription
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : Color(.systemBackground))
-            .foregroundColor(isSelected ? .blue : .primary)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
-            )
+            isLoading = false
         }
     }
 }
 
 #Preview {
-    SignUpView(isShowingSignUp: .constant(true))
-        .environmentObject(AuthViewModel())
+    NavigationStack {
+        SignUpView()
+            .environmentObject(AuthService.shared)
+    }
 }
