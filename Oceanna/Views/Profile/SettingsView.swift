@@ -1,105 +1,123 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
-    @Environment(\.dismiss) var dismiss
-
-    @State private var notificationsEnabled = true
-    @State private var locationEnabled = true
-    @State private var showDeleteAlert = false
+    @EnvironmentObject var authService: AuthService
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingDeleteConfirmation = false
+    @State private var showingSignOutConfirmation = false
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
+                // Privacy Section
                 Section {
-                    Toggle("Push Notifications", isOn: $notificationsEnabled)
-                    Toggle("Location Services", isOn: $locationEnabled)
-                } header: {
-                    Text("Preferences")
-                }
-
-                Section {
-                    NavigationLink("Privacy Policy") {
-                        WebViewPlaceholder(title: "Privacy Policy")
-                    }
-                    NavigationLink("Terms of Service") {
-                        WebViewPlaceholder(title: "Terms of Service")
-                    }
-                    NavigationLink("Help & Support") {
-                        WebViewPlaceholder(title: "Help & Support")
+                    if let user = authService.userProfile {
+                        NavigationLink {
+                            PrivacySettingsView(visibility: user.visibility)
+                        } label: {
+                            Label("Privacy", systemImage: "lock")
+                        }
                     }
                 } header: {
-                    Text("Legal")
+                    Text("Privacy")
                 }
 
+                // Account Section
                 Section {
-                    Button("Sign Out") {
-                        authViewModel.signOut()
-                        dismiss()
+                    Button {
+                        showingSignOutConfirmation = true
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                            .foregroundColor(OceannaTheme.Colors.primaryText)
                     }
-                    .foregroundColor(.blue)
 
-                    Button("Delete Account") {
-                        showDeleteAlert = true
+                    Button(role: .destructive) {
+                        showingDeleteConfirmation = true
+                    } label: {
+                        Label("Delete Account", systemImage: "trash")
                     }
-                    .foregroundColor(.red)
                 } header: {
                     Text("Account")
                 }
 
+                // About Section
                 Section {
                     HStack {
+                        Text("Version")
                         Spacer()
-                        VStack(spacing: 4) {
-                            Text("Oceanna")
-                                .font(.headline)
-                            Text("Version 1.0.0")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
+                        Text("1.0.0")
+                            .foregroundColor(OceannaTheme.Colors.secondaryText)
                     }
+                } header: {
+                    Text("About")
                 }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
+                    .foregroundColor(OceannaTheme.Colors.primary)
                 }
             }
-            .alert("Delete Account", isPresented: $showDeleteAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Delete", role: .destructive) {
+            .confirmationDialog("Sign Out", isPresented: $showingSignOutConfirmation) {
+                Button("Sign Out", role: .destructive) {
+                    try? authService.signOut()
+                    dismiss()
+                }
+            } message: {
+                Text("Are you sure you want to sign out?")
+            }
+            .confirmationDialog("Delete Account", isPresented: $showingDeleteConfirmation) {
+                Button("Delete Account", role: .destructive) {
                     Task {
-                        await authViewModel.deleteAccount()
-                        dismiss()
+                        try? await authService.deleteAccount()
                     }
                 }
             } message: {
-                Text("Are you sure you want to delete your account? This action cannot be undone.")
+                Text("This action cannot be undone. All your data will be permanently deleted.")
             }
         }
     }
 }
 
-struct WebViewPlaceholder: View {
-    let title: String
+struct PrivacySettingsView: View {
+    @EnvironmentObject var authService: AuthService
+    @State var visibility: ProfileVisibility
 
     var body: some View {
-        VStack {
-            Text(title)
-                .font(.title)
-            Text("Content would be loaded here")
-                .foregroundColor(.secondary)
+        List {
+            Section {
+                Toggle("Show Skills", isOn: $visibility.showSkills)
+                Toggle("Show Portfolio", isOn: $visibility.showPortfolio)
+                Toggle("Show Bio", isOn: $visibility.showBio)
+                Toggle("Show City", isOn: $visibility.showCity)
+            } header: {
+                Text("Visible to non-connections")
+            } footer: {
+                Text("Connections can always see your full profile.")
+            }
         }
-        .navigationTitle(title)
+        .navigationTitle("Privacy")
+        .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: visibility) { _, newValue in
+            saveVisibility(newValue)
+        }
+        .tint(OceannaTheme.Colors.primary)
+    }
+
+    private func saveVisibility(_ visibility: ProfileVisibility) {
+        guard var user = authService.userProfile else { return }
+        user.visibility = visibility
+        Task {
+            try? await authService.updateUserProfile(user)
+        }
     }
 }
 
 #Preview {
     SettingsView()
-        .environmentObject(AuthViewModel())
+        .environmentObject(AuthService.shared)
 }
