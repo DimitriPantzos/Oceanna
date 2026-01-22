@@ -2,12 +2,8 @@ import SwiftUI
 
 struct MessagesListView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    private let connectionService = ConnectionService.shared
-    private let firestoreService = FirestoreService.shared
+    @StateObject private var viewModel = MessagesViewModel()
 
-    @State private var conversations: [Conversation] = []
-    @State private var participants: [String: User] = [:]
-    @State private var isLoading = true
     @State private var selectedSection: MessageSection = .messages
 
     enum MessageSection: String, CaseIterable {
@@ -23,8 +19,8 @@ struct MessagesListView: View {
                     ForEach(MessageSection.allCases, id: \.self) { section in
                         HStack {
                             Text(section.rawValue)
-                            if section == .requests && !connectionService.pendingRequests.isEmpty {
-                                Text("\(connectionService.pendingRequests.count)")
+                            if section == .requests && !viewModel.connectionRequests.isEmpty {
+                                Text("\(viewModel.connectionRequests.count)")
                                     .font(OceannaTheme.Typography.monoSmall)
                             }
                         }
@@ -35,7 +31,7 @@ struct MessagesListView: View {
                 .padding(OceannaTheme.Spacing.md)
 
                 // Content
-                if isLoading {
+                if viewModel.isLoading {
                     Spacer()
                     ProgressView()
                     Spacer()
@@ -51,18 +47,25 @@ struct MessagesListView: View {
             .background(OceannaTheme.Colors.background)
             .navigationTitle("Inbox")
             .navigationBarTitleDisplayMode(.inline)
-            .task {
-                await loadData()
+            .onAppear {
+                if let userId = authViewModel.userProfile?.id {
+                    viewModel.startListening(for: userId)
+                }
+            }
+            .onDisappear {
+                viewModel.stopListening()
             }
             .refreshable {
-                await loadData()
+                if let userId = authViewModel.userProfile?.id {
+                    await viewModel.refreshData(for: userId)
+                }
             }
         }
     }
 
     private var messagesSection: some View {
         Group {
-            if conversations.isEmpty {
+            if viewModel.conversations.isEmpty {
                 VStack(spacing: OceannaTheme.Spacing.md) {
                     Image(systemName: "bubble.left.and.bubble.right")
                         .font(.system(size: 48))
@@ -79,10 +82,10 @@ struct MessagesListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(conversations) { conversation in
+                    ForEach(viewModel.conversations) { conversation in
                         if let currentUserId = authViewModel.userProfile?.id,
                            let otherUserId = conversation.otherParticipantId(currentUserId: currentUserId),
-                           let otherUser = participants[otherUserId] {
+                           let otherUser = viewModel.participantProfiles[otherUserId] {
                             NavigationLink {
                                 ChatView(conversation: conversation, otherUser: otherUser)
                             } label: {
@@ -102,7 +105,7 @@ struct MessagesListView: View {
 
     private var requestsSection: some View {
         Group {
-            if connectionService.pendingRequests.isEmpty {
+            if viewModel.connectionRequests.isEmpty {
                 VStack(spacing: OceannaTheme.Spacing.md) {
                     Image(systemName: "person.badge.plus")
                         .font(.system(size: 48))
@@ -115,8 +118,8 @@ struct MessagesListView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(connectionService.pendingRequests) { request in
-                        if let requester = participants[request.requesterId] {
+                    ForEach(viewModel.connectionRequests) { request in
+                        if let requester = viewModel.participantProfiles[request.requesterId] {
                             ConnectionRequestRow(
                                 request: request,
                                 requester: requester,
@@ -131,46 +134,17 @@ struct MessagesListView: View {
         }
     }
 
-    private func loadData() async {
-        guard let userId = authViewModel.userProfile?.id else { return }
-
-        // Load connections and pending requests
-        await connectionService.fetchConnections(for: userId)
-        await connectionService.fetchPendingRequests(for: userId)
-
-        // TODO: Load conversations from Firestore
-        // For now, conversations will be empty until messaging service is implemented
-
-        // Fetch all participant users
-        var allUserIds = Set(connectionService.pendingRequests.map { $0.requesterId })
-        allUserIds.formUnion(connectionService.connectedUserIds)
-
-        if !allUserIds.isEmpty {
-            do {
-                let users = try await firestoreService.fetchUsers(ids: Array(allUserIds))
-                participants = Dictionary(uniqueKeysWithValues: users.compactMap { user in
-                    guard let id = user.id else { return nil }
-                    return (id, user)
-                })
-            } catch {
-                print("Error loading participants: \(error)")
-            }
-        }
-
-        isLoading = false
-    }
-
     private func acceptRequest(_ request: Connection) {
+        guard let userId = authViewModel.userProfile?.id else { return }
         Task {
-            try? await connectionService.acceptConnection(request)
-            await loadData()
+            await viewModel.acceptConnection(request, currentUserId: userId)
         }
     }
 
     private func ignoreRequest(_ request: Connection) {
+        guard let userId = authViewModel.userProfile?.id else { return }
         Task {
-            try? await connectionService.ignoreConnection(request)
-            await loadData()
+            await viewModel.declineConnection(request, currentUserId: userId)
         }
     }
 }
