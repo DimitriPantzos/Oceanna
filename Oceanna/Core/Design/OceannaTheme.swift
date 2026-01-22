@@ -110,3 +110,13 @@ extension View {
         modifier(MonoTagStyle())
     }
 }
+
+struct OceannaTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .font(OceannaTheme.Typography.body)
+            .padding(OceannaTheme.Spacing.md)
+            .background(OceannaTheme.Colors.secondaryBackground)
+            .cornerRadius(OceannaTheme.Radius.sm)
+    }
+}
