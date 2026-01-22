@@ -107,17 +107,17 @@ class MessagingService: ObservableObject {
         in conversationId: String,
         senderId: String,
         content: String,
-        messageType: Message.MessageType = .text,
-        attachments: [Message.Attachment] = []
+        messageType: MessageType = .text,
+        attachments: [String] = []
     ) async throws {
         let message = Message(
             conversationId: conversationId,
             senderId: senderId,
             content: content,
             messageType: messageType,
+            attachments: attachments,
             timestamp: Date(),
-            isRead: false,
-            attachments: attachments
+            isRead: false
         )
 
         // Add message to subcollection

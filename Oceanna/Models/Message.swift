@@ -48,7 +48,8 @@ struct Message: Identifiable, Codable {
     var attachments: [String]
     var quoteData: QuoteData?
     var milestoneData: MilestoneData?
-    var createdAt: Date
+    var timestamp: Date
+    var isRead: Bool
 
     init(
         id: String? = nil,
@@ -59,7 +60,8 @@ struct Message: Identifiable, Codable {
         attachments: [String] = [],
         quoteData: QuoteData? = nil,
         milestoneData: MilestoneData? = nil,
-        createdAt: Date = Date()
+        timestamp: Date = Date(),
+        isRead: Bool = false
     ) {
         self.id = id
         self.conversationId = conversationId
@@ -69,7 +71,8 @@ struct Message: Identifiable, Codable {
         self.attachments = attachments
         self.quoteData = quoteData
         self.milestoneData = milestoneData
-        self.createdAt = createdAt
+        self.timestamp = timestamp
+        self.isRead = isRead
     }
 }
 
@@ -124,7 +127,8 @@ extension Message {
         id: "msg1",
         conversationId: "conv1",
         senderId: "user1",
-        content: "Hey! I'd love to work on this project with you."
+        content: "Hey! I'd love to work on this project with you.",
+        timestamp: Date()
     )
 
     static let quoteExample = Message(
@@ -133,7 +137,8 @@ extension Message {
         senderId: "user1",
         content: "Here's my quote for the project:",
         messageType: .quote,
-        quoteData: QuoteData(description: "Brand identity package", amount: "$1,500")
+        quoteData: QuoteData(description: "Brand identity package", amount: "$1,500"),
+        timestamp: Date()
     )
 }
 
