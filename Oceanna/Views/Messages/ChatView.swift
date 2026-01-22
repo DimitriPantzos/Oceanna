@@ -6,12 +6,21 @@ struct ChatView: View {
 
     @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel: ChatViewModel
 
-    @State private var messages: [Message] = []
-    @State private var newMessage = ""
-    @State private var isLoading = true
+    // UI-only state
+    @State private var messageText = ""
     @State private var showingQuoteSheet = false
     @State private var showingCompletionAlert = false
+
+    init(conversation: Conversation, otherUser: User, currentUserId: String) {
+        self.conversation = conversation
+        self.otherUser = otherUser
+        _viewModel = StateObject(wrappedValue: ChatViewModel(
+            conversationId: conversation.id ?? "",
+            currentUserId: currentUserId
+        ))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,18 +28,18 @@ struct ChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: OceannaTheme.Spacing.sm) {
-                        ForEach(messages) { message in
+                        ForEach(viewModel.messages) { message in
                             MessageBubble(
                                 message: message,
-                                isFromCurrentUser: message.senderId == authViewModel.userProfile?.id
+                                isFromCurrentUser: message.senderId == viewModel.currentUserId
                             )
                             .id(message.id)
                         }
                     }
                     .padding(OceannaTheme.Spacing.md)
                 }
-                .onChange(of: messages.count) { _, _ in
-                    if let lastId = messages.last?.id {
+                .onChange(of: viewModel.messages.count) { _, _ in
+                    if let lastId = viewModel.messages.last?.id {
                         withAnimation {
                             proxy.scrollTo(lastId, anchor: .bottom)
                         }
@@ -67,18 +76,22 @@ struct ChatView: View {
 
                 // Text input
                 HStack(spacing: OceannaTheme.Spacing.sm) {
-                    TextField("Message", text: $newMessage, axis: .vertical)
+                    TextField("Message", text: $messageText, axis: .vertical)
                         .textFieldStyle(OceannaTextFieldStyle())
                         .lineLimit(1...4)
 
                     Button {
-                        sendMessage()
+                        Task {
+                            let content = messageText
+                            messageText = ""
+                            await viewModel.sendMessage(content: content)
+                        }
                     } label: {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.system(size: 32))
-                            .foregroundColor(newMessage.isEmpty ? OceannaTheme.Colors.tertiaryText : OceannaTheme.Colors.primary)
+                            .foregroundColor(messageText.isEmpty ? OceannaTheme.Colors.tertiaryText : OceannaTheme.Colors.primary)
                     }
-                    .disabled(newMessage.isEmpty)
+                    .disabled(messageText.isEmpty || viewModel.isSending)
                 }
                 .padding(.horizontal, OceannaTheme.Spacing.md)
                 .padding(.bottom, OceannaTheme.Spacing.sm)
@@ -90,7 +103,6 @@ struct ChatView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 NavigationLink {
-                    // Profile view for other user
                     ExpandedProfileView(user: otherUser)
                 } label: {
                     AvatarView(url: otherUser.avatarUrl, initials: otherUser.initials, size: 32)
@@ -98,65 +110,28 @@ struct ChatView: View {
             }
         }
         .sheet(isPresented: $showingQuoteSheet) {
-            SendQuoteSheet(conversationId: conversation.id ?? "", onSend: { quote in
-                sendQuote(quote)
-            })
+            SendQuoteSheet(conversationId: conversation.id ?? "") { quote in
+                Task {
+                    await viewModel.sendQuote(description: quote.description, amount: quote.amount)
+                }
+            }
         }
         .alert("Mark as Complete", isPresented: $showingCompletionAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Complete") {
-                markComplete()
+                Task {
+                    await viewModel.markComplete()
+                }
             }
         } message: {
             Text("This will mark the project as complete. Both parties must confirm before reviews can be left.")
         }
-        .task {
-            await loadMessages()
+        .onAppear {
+            viewModel.startListening()
         }
-    }
-
-    private func loadMessages() async {
-        // TODO: Implement message loading from Firestore
-        // For now, show empty state
-        isLoading = false
-    }
-
-    private func sendMessage() {
-        guard !newMessage.isEmpty,
-              let conversationId = conversation.id,
-              let senderId = authViewModel.userProfile?.id else { return }
-
-        let message = Message(
-            conversationId: conversationId,
-            senderId: senderId,
-            content: newMessage
-        )
-
-        // Add to local list immediately for responsiveness
-        messages.append(message)
-        newMessage = ""
-
-        // TODO: Save to Firestore
-    }
-
-    private func sendQuote(_ quote: QuoteData) {
-        guard let conversationId = conversation.id,
-              let senderId = authViewModel.userProfile?.id else { return }
-
-        let message = Message(
-            conversationId: conversationId,
-            senderId: senderId,
-            content: "Sent a quote",
-            messageType: .quote,
-            quoteData: quote
-        )
-
-        messages.append(message)
-        // TODO: Save to Firestore
-    }
-
-    private func markComplete() {
-        // TODO: Implement completion confirmation
+        .onDisappear {
+            viewModel.stopListening()
+        }
     }
 }
 
@@ -197,7 +172,7 @@ struct MessageBubble: View {
                         .cornerRadius(OceannaTheme.Radius.md)
                 }
 
-                Text(message.createdAt, style: .time)
+                Text(message.timestamp, style: .time)
                     .font(OceannaTheme.Typography.caption)
                     .foregroundColor(OceannaTheme.Colors.tertiaryText)
             }
@@ -428,7 +403,8 @@ struct ExpandedProfileView: View {
 #Preview {
     ChatView(
         conversation: Conversation.example,
-        otherUser: User.example
+        otherUser: User.example,
+        currentUserId: "user1"
     )
     .environmentObject(AuthViewModel())
 }

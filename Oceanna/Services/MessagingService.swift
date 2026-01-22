@@ -167,6 +167,60 @@ class MessagingService: ObservableObject {
         try await batch.commit()
     }
 
+    // MARK: - Quote & Milestone Messages
+
+    func sendQuoteMessage(
+        in conversationId: String,
+        senderId: String,
+        description: String,
+        amount: String
+    ) async throws {
+        let message = Message(
+            conversationId: conversationId,
+            senderId: senderId,
+            content: "Quote: \(description)",
+            messageType: .quote,
+            quoteData: QuoteData(description: description, amount: amount)
+        )
+
+        _ = try db.collection("conversations")
+            .document(conversationId)
+            .collection("messages")
+            .addDocument(from: message)
+
+        try await db.collection("conversations").document(conversationId).updateData([
+            "lastMessage": "Sent a quote",
+            "lastMessageTimestamp": Timestamp(date: Date()),
+            "lastMessageSenderId": senderId
+        ])
+    }
+
+    func sendMilestoneMessage(
+        in conversationId: String,
+        senderId: String,
+        title: String,
+        amount: String?
+    ) async throws {
+        let message = Message(
+            conversationId: conversationId,
+            senderId: senderId,
+            content: "Milestone: \(title)",
+            messageType: .milestone,
+            milestoneData: MilestoneData(title: title, amount: amount)
+        )
+
+        _ = try db.collection("conversations")
+            .document(conversationId)
+            .collection("messages")
+            .addDocument(from: message)
+
+        try await db.collection("conversations").document(conversationId).updateData([
+            "lastMessage": "Created a milestone",
+            "lastMessageTimestamp": Timestamp(date: Date()),
+            "lastMessageSenderId": senderId
+        ])
+    }
+
     // MARK: - Typing Indicators
 
     func setTypingStatus(in conversationId: String, userId: String, isTyping: Bool) async throws {

@@ -87,7 +87,7 @@ struct MessagesListView: View {
                            let otherUserId = conversation.otherParticipantId(currentUserId: currentUserId),
                            let otherUser = viewModel.participantProfiles[otherUserId] {
                             NavigationLink {
-                                ChatView(conversation: conversation, otherUser: otherUser)
+                                ChatView(conversation: conversation, otherUser: otherUser, currentUserId: currentUserId)
                             } label: {
                                 ConversationRow(
                                     conversation: conversation,
