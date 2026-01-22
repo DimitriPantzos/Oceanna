@@ -2,8 +2,8 @@ import SwiftUI
 
 struct DiscoveryView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var firestoreService = FirestoreService.shared
-    @StateObject private var connectionService = ConnectionService.shared
+    private let firestoreService = FirestoreService.shared
+    private let connectionService = ConnectionService.shared
 
     @State private var users: [User] = []
     @State private var opportunities: [FeedPost] = []

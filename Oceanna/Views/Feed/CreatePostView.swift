@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CreatePostView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let firestoreService = FirestoreService.shared
     @Environment(\.dismiss) private var dismiss
 
     @State private var postType: PostType = .portfolio

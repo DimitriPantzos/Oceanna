@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let firestoreService = FirestoreService.shared
     @State private var portfolio: [PortfolioItem] = []
     @State private var reviews: [Review] = []
     @State private var isLoading = true

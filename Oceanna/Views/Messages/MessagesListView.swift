@@ -2,8 +2,8 @@ import SwiftUI
 
 struct MessagesListView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var connectionService = ConnectionService.shared
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let connectionService = ConnectionService.shared
+    private let firestoreService = FirestoreService.shared
 
     @State private var conversations: [Conversation] = []
     @State private var participants: [String: User] = [:]

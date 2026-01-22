@@ -319,7 +319,7 @@ struct SendQuoteSheet: View {
 
 struct ExpandedProfileView: View {
     let user: User
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let firestoreService = FirestoreService.shared
     @State private var portfolio: [PortfolioItem] = []
     @State private var reviews: [Review] = []
 

@@ -2,8 +2,8 @@ import SwiftUI
 
 struct FeedView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var connectionService = ConnectionService.shared
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let connectionService = ConnectionService.shared
+    private let firestoreService = FirestoreService.shared
 
     @State private var posts: [FeedPost] = []
     @State private var authors: [String: User] = [:]
@@ -186,7 +186,7 @@ struct OpportunityDetailsCard: View {
     let details: OpportunityDetails
     let postId: String
     @EnvironmentObject var authService: AuthService
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let firestoreService = FirestoreService.shared
     @State private var isInterested = false
     @State private var hasApplied = false
 

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ReviewCard: View {
     let review: Review
-    @StateObject private var firestoreService = FirestoreService.shared
+    private let firestoreService = FirestoreService.shared
     @State private var reviewer: User?
 
     var body: some View {
