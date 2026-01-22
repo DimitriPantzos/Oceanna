@@ -3,7 +3,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab: Tab = .feed
     @StateObject private var connectionService = ConnectionService.shared
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     enum Tab: String, CaseIterable {
         case feed = "Feed"
@@ -65,5 +65,5 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

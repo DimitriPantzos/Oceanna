@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct EditProfileView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var displayName = ""
@@ -178,7 +178,7 @@ struct EditProfileView: View {
     }
 
     private func loadCurrentProfile() {
-        guard let user = authService.userProfile else { return }
+        guard let user = authViewModel.userProfile else { return }
         displayName = user.displayName
         city = user.city
         bio = user.bio ?? ""
@@ -188,7 +188,7 @@ struct EditProfileView: View {
     }
 
     private func save() {
-        guard var user = authService.userProfile else { return }
+        guard var user = authViewModel.userProfile else { return }
 
         isLoading = true
         errorMessage = nil
@@ -201,11 +201,10 @@ struct EditProfileView: View {
         user.availability = availability
 
         Task {
-            do {
-                try await authService.updateUserProfile(user)
+            await authViewModel.updateUserProfile(user)
+            errorMessage = authViewModel.errorMessage
+            if errorMessage == nil {
                 dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
             }
             isLoading = false
         }
@@ -214,5 +213,5 @@ struct EditProfileView: View {
 
 #Preview {
     EditProfileView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

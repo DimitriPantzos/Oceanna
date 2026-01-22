@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SignUpView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var email = ""
@@ -81,15 +81,12 @@ struct SignUpView: View {
         errorMessage = nil
 
         Task {
-            do {
-                _ = try await authService.signUp(
-                    email: email,
-                    password: password,
-                    displayName: displayName
-                )
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+            await authViewModel.signUp(
+                email: email,
+                password: password,
+                displayName: displayName
+            )
+            errorMessage = authViewModel.errorMessage
             isLoading = false
         }
     }
@@ -98,6 +95,6 @@ struct SignUpView: View {
 #Preview {
     NavigationStack {
         SignUpView()
-            .environmentObject(AuthService.shared)
+            .environmentObject(AuthViewModel())
     }
 }

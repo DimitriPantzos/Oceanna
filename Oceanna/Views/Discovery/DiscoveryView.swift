@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct DiscoveryView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let firestoreService = FirestoreService.shared
     private let connectionService = ConnectionService.shared
 
@@ -12,7 +12,7 @@ struct DiscoveryView: View {
     @State private var isLoading = true
 
     private var isHireable: Bool {
-        authService.userProfile?.isHireable ?? true
+        authViewModel.userProfile?.isHireable ?? true
     }
 
     var body: some View {
@@ -163,7 +163,7 @@ struct DiscoveryView: View {
     }
 
     private func loadContent() async {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
 
         isLoading = true
         currentIndex = 0
@@ -188,7 +188,7 @@ struct DiscoveryView: View {
     }
 
     private func sendConnectionRequest(to user: User) {
-        guard let currentUserId = authService.userProfile?.id,
+        guard let currentUserId = authViewModel.userProfile?.id,
               let targetUserId = user.id else { return }
 
         Task {
@@ -197,7 +197,7 @@ struct DiscoveryView: View {
     }
 
     private func applyToOpportunity(_ opportunity: FeedPost) {
-        guard let userId = authService.userProfile?.id,
+        guard let userId = authViewModel.userProfile?.id,
               let postId = opportunity.id else { return }
 
         Task {
@@ -403,5 +403,5 @@ struct OpportunityCardContent: View {
 
 #Preview {
     DiscoveryView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

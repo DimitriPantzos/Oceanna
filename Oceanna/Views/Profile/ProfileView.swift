@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let firestoreService = FirestoreService.shared
     @State private var portfolio: [PortfolioItem] = []
     @State private var reviews: [Review] = []
@@ -12,7 +12,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                if let user = authService.userProfile {
+                if let user = authViewModel.userProfile {
                     VStack(spacing: OceannaTheme.Spacing.lg) {
                         // Header
                         profileHeader(user: user)
@@ -124,7 +124,7 @@ struct ProfileView: View {
                 get: { user.isHireable },
                 set: { newValue in
                     Task {
-                        try? await authService.updateHireableStatus(newValue)
+                        await authViewModel.updateHireableStatus(newValue)
                     }
                 }
             ))
@@ -188,7 +188,7 @@ struct ProfileView: View {
     }
 
     private func loadData() async {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
 
         do {
             portfolio = try await firestoreService.fetchPortfolio(for: userId)
@@ -203,5 +203,5 @@ struct ProfileView: View {
 
 #Preview {
     ProfileView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

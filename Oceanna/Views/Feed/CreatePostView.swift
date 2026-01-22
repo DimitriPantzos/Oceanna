@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CreatePostView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let firestoreService = FirestoreService.shared
     @Environment(\.dismiss) private var dismiss
 
@@ -207,7 +207,7 @@ struct CreatePostView: View {
     }
 
     private func createPost() {
-        guard let authorId = authService.userProfile?.id else { return }
+        guard let authorId = authViewModel.userProfile?.id else { return }
 
         isLoading = true
         errorMessage = nil
@@ -244,5 +244,5 @@ struct CreatePostView: View {
 
 #Preview {
     CreatePostView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

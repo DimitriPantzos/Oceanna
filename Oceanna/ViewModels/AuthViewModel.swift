@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseAuth
 
 @MainActor
 class AuthViewModel: ObservableObject {
@@ -11,6 +12,7 @@ class AuthViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var userProfile: User?
+    @Published var currentUser: FirebaseAuth.User?
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -36,6 +38,9 @@ class AuthViewModel: ObservableObject {
 
         authService.$isLoading
             .assign(to: &$isLoading)
+
+        authService.$currentUser
+            .assign(to: &$currentUser)
     }
 
     // MARK: - Auth Actions
@@ -93,6 +98,24 @@ class AuthViewModel: ObservableObject {
     func updateHireableStatus(_ isHireable: Bool) async {
         do {
             try await authService.updateHireableStatus(isHireable)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func updateUserProfile(_ user: User) async {
+        errorMessage = nil
+        do {
+            try await authService.updateUserProfile(user)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func deleteAccount() async {
+        errorMessage = nil
+        do {
+            try await authService.deleteAccount()
         } catch {
             errorMessage = error.localizedDescription
         }

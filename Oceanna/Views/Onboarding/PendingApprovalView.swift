@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PendingApprovalView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         VStack(spacing: OceannaTheme.Spacing.xl) {
@@ -26,7 +26,7 @@ struct PendingApprovalView: View {
             Spacer()
 
             Button("Sign Out") {
-                try? authService.signOut()
+                authViewModel.signOut()
             }
             .font(OceannaTheme.Typography.subheadline)
             .foregroundColor(OceannaTheme.Colors.secondaryText)
@@ -39,5 +39,5 @@ struct PendingApprovalView: View {
 
 #Preview {
     PendingApprovalView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

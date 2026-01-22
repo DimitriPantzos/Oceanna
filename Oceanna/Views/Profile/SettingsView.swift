@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var showingDeleteConfirmation = false
     @State private var showingSignOutConfirmation = false
@@ -11,7 +11,7 @@ struct SettingsView: View {
             List {
                 // Privacy Section
                 Section {
-                    if let user = authService.userProfile {
+                    if let user = authViewModel.userProfile {
                         NavigationLink {
                             PrivacySettingsView(visibility: user.visibility)
                         } label: {
@@ -64,7 +64,7 @@ struct SettingsView: View {
             }
             .confirmationDialog("Sign Out", isPresented: $showingSignOutConfirmation) {
                 Button("Sign Out", role: .destructive) {
-                    try? authService.signOut()
+                    authViewModel.signOut()
                     dismiss()
                 }
             } message: {
@@ -73,7 +73,7 @@ struct SettingsView: View {
             .confirmationDialog("Delete Account", isPresented: $showingDeleteConfirmation) {
                 Button("Delete Account", role: .destructive) {
                     Task {
-                        try? await authService.deleteAccount()
+                        await authViewModel.deleteAccount()
                     }
                 }
             } message: {
@@ -84,7 +84,7 @@ struct SettingsView: View {
 }
 
 struct PrivacySettingsView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @State var visibility: ProfileVisibility
 
     var body: some View {
@@ -109,15 +109,15 @@ struct PrivacySettingsView: View {
     }
 
     private func saveVisibility(_ visibility: ProfileVisibility) {
-        guard var user = authService.userProfile else { return }
+        guard var user = authViewModel.userProfile else { return }
         user.visibility = visibility
         Task {
-            try? await authService.updateUserProfile(user)
+            await authViewModel.updateUserProfile(user)
         }
     }
 }
 
 #Preview {
     SettingsView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

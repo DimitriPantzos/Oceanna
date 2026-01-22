@@ -4,7 +4,7 @@ struct ChatView: View {
     let conversation: Conversation
     let otherUser: User
 
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @Environment(\.dismiss) private var dismiss
 
     @State private var messages: [Message] = []
@@ -22,7 +22,7 @@ struct ChatView: View {
                         ForEach(messages) { message in
                             MessageBubble(
                                 message: message,
-                                isFromCurrentUser: message.senderId == authService.userProfile?.id
+                                isFromCurrentUser: message.senderId == authViewModel.userProfile?.id
                             )
                             .id(message.id)
                         }
@@ -124,7 +124,7 @@ struct ChatView: View {
     private func sendMessage() {
         guard !newMessage.isEmpty,
               let conversationId = conversation.id,
-              let senderId = authService.userProfile?.id else { return }
+              let senderId = authViewModel.userProfile?.id else { return }
 
         let message = Message(
             conversationId: conversationId,
@@ -141,7 +141,7 @@ struct ChatView: View {
 
     private func sendQuote(_ quote: QuoteData) {
         guard let conversationId = conversation.id,
-              let senderId = authService.userProfile?.id else { return }
+              let senderId = authViewModel.userProfile?.id else { return }
 
         let message = Message(
             conversationId: conversationId,
@@ -430,5 +430,5 @@ struct ExpandedProfileView: View {
         conversation: Conversation.example,
         otherUser: User.example
     )
-    .environmentObject(AuthService.shared)
+    .environmentObject(AuthViewModel())
 }

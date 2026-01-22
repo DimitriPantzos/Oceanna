@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WaitlistView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         VStack(spacing: OceannaTheme.Spacing.xl) {
@@ -39,7 +39,7 @@ struct WaitlistView: View {
             .oceannaButton(isPrimary: true)
 
             Button("Sign Out") {
-                try? authService.signOut()
+                authViewModel.signOut()
             }
             .font(OceannaTheme.Typography.subheadline)
             .foregroundColor(OceannaTheme.Colors.secondaryText)
@@ -70,5 +70,5 @@ struct WaitlistTip: View {
 
 #Preview {
     WaitlistView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

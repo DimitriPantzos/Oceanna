@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FeedView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let connectionService = ConnectionService.shared
     private let firestoreService = FirestoreService.shared
 
@@ -74,7 +74,7 @@ struct FeedView: View {
     }
 
     private func loadFeed() async {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
 
         // Get connections
         await connectionService.fetchConnections(for: userId)
@@ -185,7 +185,7 @@ struct PostCard: View {
 struct OpportunityDetailsCard: View {
     let details: OpportunityDetails
     let postId: String
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let firestoreService = FirestoreService.shared
     @State private var isInterested = false
     @State private var hasApplied = false
@@ -243,7 +243,7 @@ struct OpportunityDetailsCard: View {
     }
 
     private func expressInterest() {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
         Task {
             try? await firestoreService.expressInterest(postId: postId, userId: userId)
             isInterested = true
@@ -251,7 +251,7 @@ struct OpportunityDetailsCard: View {
     }
 
     private func apply() {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
         Task {
             try? await firestoreService.applyToOpportunity(postId: postId, userId: userId)
             hasApplied = true
@@ -261,5 +261,5 @@ struct OpportunityDetailsCard: View {
 
 #Preview {
     FeedView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

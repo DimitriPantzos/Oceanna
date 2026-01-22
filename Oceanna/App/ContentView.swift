@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         Group {
-            if authService.isLoading {
+            if authViewModel.isLoading {
                 LoadingView()
-            } else if authService.currentUser == nil {
+            } else if authViewModel.currentUser == nil {
                 AuthenticationView()
-            } else if let user = authService.userProfile {
+            } else if let user = authViewModel.userProfile {
                 switch user.approvalStatus {
                 case .approved:
                     MainTabView()
@@ -27,5 +27,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     @State private var currentStep = 0
     @State private var city = ""
     @State private var skills: [String] = []
@@ -216,17 +216,14 @@ struct OnboardingView: View {
         errorMessage = nil
 
         Task {
-            do {
-                try await authService.completeOnboarding(
-                    city: city,
-                    skills: skills,
-                    lookingFor: lookingFor,
-                    availability: availability,
-                    isHireable: isHireable
-                )
-            } catch {
-                errorMessage = error.localizedDescription
-            }
+            await authViewModel.completeOnboarding(
+                city: city,
+                skills: skills,
+                lookingFor: lookingFor,
+                availability: availability,
+                isHireable: isHireable
+            )
+            errorMessage = authViewModel.errorMessage
             isLoading = false
         }
     }
@@ -288,5 +285,5 @@ struct OnboardingStepView<Content: View, ActionLabel: View>: View {
 
 #Preview {
     OnboardingView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct MessagesListView: View {
-    @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var authViewModel: AuthViewModel
     private let connectionService = ConnectionService.shared
     private let firestoreService = FirestoreService.shared
 
@@ -80,7 +80,7 @@ struct MessagesListView: View {
             } else {
                 List {
                     ForEach(conversations) { conversation in
-                        if let currentUserId = authService.userProfile?.id,
+                        if let currentUserId = authViewModel.userProfile?.id,
                            let otherUserId = conversation.otherParticipantId(currentUserId: currentUserId),
                            let otherUser = participants[otherUserId] {
                             NavigationLink {
@@ -132,7 +132,7 @@ struct MessagesListView: View {
     }
 
     private func loadData() async {
-        guard let userId = authService.userProfile?.id else { return }
+        guard let userId = authViewModel.userProfile?.id else { return }
 
         // Load connections and pending requests
         await connectionService.fetchConnections(for: userId)
@@ -273,5 +273,5 @@ struct ConnectionRequestRow: View {
 
 #Preview {
     MessagesListView()
-        .environmentObject(AuthService.shared)
+        .environmentObject(AuthViewModel())
 }
