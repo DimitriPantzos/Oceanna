@@ -2,14 +2,7 @@ import SwiftUI
 
 struct DiscoveryView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
-    private let firestoreService = FirestoreService.shared
-    private let connectionService = ConnectionService.shared
-
-    @State private var users: [User] = []
-    @State private var opportunities: [FeedPost] = []
-    @State private var opportunityAuthors: [String: User] = [:]
-    @State private var currentIndex = 0
-    @State private var isLoading = true
+    @StateObject private var viewModel = DiscoveryViewModel()
 
     private var isHireable: Bool {
         authViewModel.userProfile?.isHireable ?? true
@@ -21,22 +14,22 @@ struct DiscoveryView: View {
                 OceannaTheme.Colors.background
                     .ignoresSafeArea()
 
-                if isLoading {
+                if viewModel.isLoading {
                     ProgressView()
                 } else if isHireable {
                     // Show opportunities
-                    if opportunities.isEmpty {
+                    if viewModel.opportunities.isEmpty {
                         emptyOpportunitiesState
-                    } else if currentIndex < opportunities.count {
+                    } else if viewModel.currentIndex < viewModel.opportunities.count {
                         opportunitySwipeView
                     } else {
                         noMoreCardsState
                     }
                 } else {
                     // Show users
-                    if users.isEmpty {
+                    if viewModel.users.isEmpty {
                         emptyUsersState
-                    } else if currentIndex < users.count {
+                    } else if viewModel.currentIndex < viewModel.users.count {
                         userSwipeView
                     } else {
                         noMoreCardsState
@@ -57,29 +50,29 @@ struct DiscoveryView: View {
                 }
             }
             .task {
-                await loadContent()
+                guard let userId = authViewModel.userProfile?.id else { return }
+                await viewModel.loadContent(for: userId, isHireable: isHireable)
             }
         }
     }
 
     private var userSwipeView: some View {
         ZStack {
-            ForEach(Array(users.enumerated().reversed()), id: \.element.id) { index, user in
-                if index >= currentIndex && index < currentIndex + 3 {
+            ForEach(Array(viewModel.users.enumerated().reversed()), id: \.element.id) { index, user in
+                if index >= viewModel.currentIndex && index < viewModel.currentIndex + 3 {
                     SwipeCard(
                         content: {
                             UserCardContent(user: user)
                         },
                         onSwipeLeft: {
-                            currentIndex += 1
+                            viewModel.nextCard()
                         },
                         onSwipeRight: {
                             sendConnectionRequest(to: user)
-                            currentIndex += 1
                         }
                     )
-                    .offset(y: CGFloat(index - currentIndex) * 8)
-                    .scaleEffect(1 - CGFloat(index - currentIndex) * 0.05)
+                    .offset(y: CGFloat(index - viewModel.currentIndex) * 8)
+                    .scaleEffect(1 - CGFloat(index - viewModel.currentIndex) * 0.05)
                 }
             }
         }
@@ -88,23 +81,22 @@ struct DiscoveryView: View {
 
     private var opportunitySwipeView: some View {
         ZStack {
-            ForEach(Array(opportunities.enumerated().reversed()), id: \.element.id) { index, opportunity in
-                if index >= currentIndex && index < currentIndex + 3 {
-                    if let author = opportunityAuthors[opportunity.authorId] {
+            ForEach(Array(viewModel.opportunities.enumerated().reversed()), id: \.element.id) { index, opportunity in
+                if index >= viewModel.currentIndex && index < viewModel.currentIndex + 3 {
+                    if let author = viewModel.opportunityAuthors[opportunity.authorId] {
                         SwipeCard(
                             content: {
                                 OpportunityCardContent(opportunity: opportunity, author: author)
                             },
                             onSwipeLeft: {
-                                currentIndex += 1
+                                viewModel.nextCard()
                             },
                             onSwipeRight: {
                                 applyToOpportunity(opportunity)
-                                currentIndex += 1
                             }
                         )
-                        .offset(y: CGFloat(index - currentIndex) * 8)
-                        .scaleEffect(1 - CGFloat(index - currentIndex) * 0.05)
+                        .offset(y: CGFloat(index - viewModel.currentIndex) * 8)
+                        .scaleEffect(1 - CGFloat(index - viewModel.currentIndex) * 0.05)
                     }
                 }
             }
@@ -155,36 +147,14 @@ struct DiscoveryView: View {
                 .foregroundColor(OceannaTheme.Colors.primaryText)
 
             Button("Refresh") {
-                currentIndex = 0
-                Task { await loadContent() }
+                viewModel.refresh()
+                Task {
+                    guard let userId = authViewModel.userProfile?.id else { return }
+                    await viewModel.loadContent(for: userId, isHireable: isHireable)
+                }
             }
             .oceannaButton(isPrimary: false)
         }
-    }
-
-    private func loadContent() async {
-        guard let userId = authViewModel.userProfile?.id else { return }
-
-        isLoading = true
-        currentIndex = 0
-
-        do {
-            if isHireable {
-                opportunities = try await firestoreService.fetchOpportunities()
-                let authorIds = Set(opportunities.map { $0.authorId })
-                let authors = try await firestoreService.fetchUsers(ids: Array(authorIds))
-                opportunityAuthors = Dictionary(uniqueKeysWithValues: authors.compactMap { user in
-                    guard let id = user.id else { return nil }
-                    return (id, user)
-                })
-            } else {
-                users = try await firestoreService.fetchHireableUsers(excluding: userId)
-            }
-        } catch {
-            print("Error loading discovery: \(error)")
-        }
-
-        isLoading = false
     }
 
     private func sendConnectionRequest(to user: User) {
@@ -192,7 +162,8 @@ struct DiscoveryView: View {
               let targetUserId = user.id else { return }
 
         Task {
-            try? await connectionService.sendConnectionRequest(to: targetUserId, from: currentUserId)
+            await viewModel.sendConnectionRequest(to: targetUserId, from: currentUserId)
+            viewModel.nextCard()
         }
     }
 
@@ -201,7 +172,8 @@ struct DiscoveryView: View {
               let postId = opportunity.id else { return }
 
         Task {
-            try? await firestoreService.applyToOpportunity(postId: postId, userId: userId)
+            await viewModel.applyToOpportunity(postId: postId, userId: userId)
+            viewModel.nextCard()
         }
     }
 }
