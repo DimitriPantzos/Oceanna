@@ -41,6 +41,7 @@
 		8523AFEA3A9F98845373EA96 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2520D09215558D65CF83CA35 /* LoadingView.swift */; };
 		88C3C1C8FB5A24B5635365FE /* MessagesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC71A55D4B5B7242F868AF17 /* MessagesListView.swift */; };
 		890428C2FECCB32E4E9EA325 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAC8E52B200EC4C2610FE4C /* SettingsView.swift */; };
+		98BE0AD610E4A8365F4DB519 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3428AD35C042EEFDF2C899C3 /* GoogleService-Info.plist */; };
 		A06ADC32D48B862967A675C9 /* ReviewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4703D473E06D92E750B695A /* ReviewCard.swift */; };
 		A526672FD05E05ECFB3C2840 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489DE3406A223CCF9A57745E /* SignUpView.swift */; };
 		A5E8FBC594D37CA58D25FDE8 /* PortfolioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E3088ADB68AF3FBC3635A9 /* PortfolioItem.swift */; };
@@ -67,6 +68,7 @@
 		2591646A94273E4C07B6E64C /* FeedPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPost.swift; sourceTree = "<group>"; };
 		2EA957996C84774BD3825416 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
 		323EF856C3806D63C66F7B79 /* Oceanna.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Oceanna.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3428AD35C042EEFDF2C899C3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		352A1119107B67EFC1498D39 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		483CFC8A46B12BBD01D648CF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		489DE3406A223CCF9A57745E /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
@@ -244,6 +246,7 @@
 				98D3A5B7047FEF02AD6D108D /* ViewModels */,
 				7E9293FF66B6E715C909C0A5 /* Views */,
 				E3BF76AAA56940FE6FFAF1E5 /* Assets.xcassets */,
+				3428AD35C042EEFDF2C899C3 /* GoogleService-Info.plist */,
 				483CFC8A46B12BBD01D648CF /* Info.plist */,
 			);
 			path = Oceanna;
@@ -380,6 +383,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				62EE4A568D45D47543E2973F /* Assets.xcassets in Resources */,
+				98BE0AD610E4A8365F4DB519 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
