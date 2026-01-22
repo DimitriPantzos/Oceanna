@@ -78,43 +78,49 @@ struct Message: Identifiable, Codable {
 
 struct Conversation: Identifiable, Codable {
     @DocumentID var id: String?
-    var participantIds: [String]
-    var projectReference: String?
+    var participants: [String]
+    var projectId: String?
     var lastMessage: String?
-    var lastMessageAt: Date?
-    var unreadCounts: [String: Int]
+    var lastMessageTimestamp: Date?
+    var lastMessageSenderId: String?
+    var unreadCount: [String: Int]
+    var isActive: Bool
     var isCompleted: Bool
     var completionConfirmedBy: [String]
     var createdAt: Date
 
     init(
         id: String? = nil,
-        participantIds: [String],
-        projectReference: String? = nil,
+        participants: [String],
+        projectId: String? = nil,
         lastMessage: String? = nil,
-        lastMessageAt: Date? = nil,
-        unreadCounts: [String: Int] = [:],
+        lastMessageTimestamp: Date? = nil,
+        lastMessageSenderId: String? = nil,
+        unreadCount: [String: Int] = [:],
+        isActive: Bool = true,
         isCompleted: Bool = false,
         completionConfirmedBy: [String] = [],
         createdAt: Date = Date()
     ) {
         self.id = id
-        self.participantIds = participantIds
-        self.projectReference = projectReference
+        self.participants = participants
+        self.projectId = projectId
         self.lastMessage = lastMessage
-        self.lastMessageAt = lastMessageAt
-        self.unreadCounts = unreadCounts
+        self.lastMessageTimestamp = lastMessageTimestamp
+        self.lastMessageSenderId = lastMessageSenderId
+        self.unreadCount = unreadCount
+        self.isActive = isActive
         self.isCompleted = isCompleted
         self.completionConfirmedBy = completionConfirmedBy
         self.createdAt = createdAt
     }
 
     func otherParticipantId(currentUserId: String) -> String? {
-        participantIds.first { $0 != currentUserId }
+        participants.first { $0 != currentUserId }
     }
 
-    func unreadCount(for userId: String) -> Int {
-        unreadCounts[userId] ?? 0
+    func unreadCountFor(_ userId: String) -> Int {
+        unreadCount[userId] ?? 0
     }
 
     var canLeaveReview: Bool {
@@ -145,8 +151,8 @@ extension Message {
 extension Conversation {
     static let example = Conversation(
         id: "conv1",
-        participantIds: ["user1", "user2"],
+        participants: ["user1", "user2"],
         lastMessage: "Sounds great, let's do it!",
-        lastMessageAt: Date()
+        lastMessageTimestamp: Date()
     )
 }
