@@ -166,8 +166,8 @@ struct ConversationRow: View {
 
                     Spacer()
 
-                    if let lastMessageAt = conversation.lastMessageAt {
-                        Text(lastMessageAt, style: .relative)
+                    if let lastMessageTimestamp = conversation.lastMessageTimestamp {
+                        Text(lastMessageTimestamp, style: .relative)
                             .font(OceannaTheme.Typography.caption)
                             .foregroundColor(OceannaTheme.Colors.tertiaryText)
                     }
@@ -181,8 +181,8 @@ struct ConversationRow: View {
 
                     Spacer()
 
-                    if conversation.unreadCount(for: currentUserId) > 0 {
-                        Text("\(conversation.unreadCount(for: currentUserId))")
+                    if conversation.unreadCountFor(currentUserId) > 0 {
+                        Text("\(conversation.unreadCountFor(currentUserId))")
                             .font(OceannaTheme.Typography.monoSmall)
                             .foregroundColor(.white)
                             .padding(.horizontal, OceannaTheme.Spacing.xs)

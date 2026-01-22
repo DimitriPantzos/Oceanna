@@ -1,6 +1,5 @@
 import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 @MainActor
 class MessagingService: ObservableObject {
@@ -61,9 +60,8 @@ class MessagingService: ObservableObject {
         // Create new conversation
         let conversation = Conversation(
             participants: [currentUserId, participantId],
-            createdAt: Date(),
-            isActive: true,
-            projectId: projectId
+            projectId: projectId,
+            isActive: true
         )
 
         let docRef = try db.collection("conversations").addDocument(from: conversation)

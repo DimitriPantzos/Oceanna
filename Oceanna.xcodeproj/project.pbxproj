@@ -1,0 +1,657 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		12AD4283B341E8AF3A49CB3E /* OceannaApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51466A40B4BF230E2006D511 /* OceannaApp.swift */; };
+		12B330303CF22808750A7E72 /* DiscoveryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB469CFE79A4E15A82554CD1 /* DiscoveryViewModel.swift */; };
+		1524CC744C365B90052A1DFD /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DA55A50DBC47864683A772E /* OnboardingView.swift */; };
+		175072A805B0D9E893F5B79D /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C71639156CC5BC14D6429B1 /* AuthenticationView.swift */; };
+		1EF787507FEFAAD404D86C76 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A0A7AA3684588BB7C2E7986 /* SignInView.swift */; };
+		21E020CB0763179719DBC4B6 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = D2C89D6E64C608CF579B9C7C /* FirebaseStorage */; };
+		285EE3AC7F2696940697C72D /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D600AB5F10679F46380833B /* ChatViewModel.swift */; };
+		28891B207284B000B4D76CFC /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DA42AF2B57C165198445E25 /* MainTabView.swift */; };
+		2D1062D9FC4822DAFA20B303 /* Review.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6455292BBD3EAFFCE5018E68 /* Review.swift */; };
+		32C0CCCB366A83CAAE9AB488 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2BA123574ACC70E288E9F09 /* ContentView.swift */; };
+		3DD57C447DF8B8A5ACE5DA4A /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09B2FA33F8518E4848A8C32F /* StorageService.swift */; };
+		4061875C0A2ECDE719E2AEFF /* SkillTag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B81FA91906E56814AD3CF49 /* SkillTag.swift */; };
+		4A2ED1FB861A355A71636D9B /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = 919161EFE9A34A670BABC06B /* Service.swift */; };
+		4C61C953A274CC3FA1429113 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 31433D62BE5E94EBF36690CF /* FirebaseAuth */; };
+		4CBA7C474F04E1127DC756E8 /* PortfolioCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964557DBE7CE713B3EADFA4 /* PortfolioCard.swift */; };
+		5450BFAB33E019B2FDEAF53B /* RatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2E36F1F3480F398DBADC76 /* RatingView.swift */; };
+		59F506D7C5FBE4607C87C522 /* EditProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EA957996C84774BD3825416 /* EditProfileView.swift */; };
+		6253D21090C1D7CB95F84E9D /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A5841DB364209A1B4970632 /* AuthService.swift */; };
+		62DE19C2E64A0CE3CAAD25B7 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E3B9870B54DF0FC735DA2B /* User.swift */; };
+		62EE4A568D45D47543E2973F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E3BF76AAA56940FE6FFAF1E5 /* Assets.xcassets */; };
+		68FAF5B0BC38248663BF6066 /* DiscoveryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1546DDD4728DA67F5D7D28AD /* DiscoveryView.swift */; };
+		6A91A6682FAF4B8C1B1C170C /* MessagingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C30543FB6B64352627EA0ED /* MessagingService.swift */; };
+		6C3906638972A46D2B54710D /* FirestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F755B126629E598AB7AA2F93 /* FirestoreService.swift */; };
+		6F35CE45F09F0F454B90B265 /* OceannaTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70710453EABAB178F1AB1F4A /* OceannaTheme.swift */; };
+		758983BA4E14ABA7817402B8 /* CreatePostView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BCBF374EE98F9012F84C91A /* CreatePostView.swift */; };
+		76FAAD4FF07CDC0F52832DF7 /* FeedPost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2591646A94273E4C07B6E64C /* FeedPost.swift */; };
+		77780F2842C2BD211F426A0B /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A81A9234AE17213AA2C2D3D5 /* FeedView.swift */; };
+		7A86D2B7D4844FACC1B8E08E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 352A1119107B67EFC1498D39 /* ChatView.swift */; };
+		80807D79617A6C4E61B26A14 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4A8EF79F9D622B707D30F39 /* ProfileView.swift */; };
+		824E385CCA9260515BDB2952 /* PendingApprovalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B6D445FCE56419963FB49FB /* PendingApprovalView.swift */; };
+		85054AACD8A271DB52B3E5DE /* WaitlistView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F876278FFFFD7699ABFF18E /* WaitlistView.swift */; };
+		8523AFEA3A9F98845373EA96 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2520D09215558D65CF83CA35 /* LoadingView.swift */; };
+		88C3C1C8FB5A24B5635365FE /* MessagesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC71A55D4B5B7242F868AF17 /* MessagesListView.swift */; };
+		890428C2FECCB32E4E9EA325 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAC8E52B200EC4C2610FE4C /* SettingsView.swift */; };
+		A06ADC32D48B862967A675C9 /* ReviewCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4703D473E06D92E750B695A /* ReviewCard.swift */; };
+		A526672FD05E05ECFB3C2840 /* SignUpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 489DE3406A223CCF9A57745E /* SignUpView.swift */; };
+		A5E8FBC594D37CA58D25FDE8 /* PortfolioItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63E3088ADB68AF3FBC3635A9 /* PortfolioItem.swift */; };
+		A94C53BABF1F0AA9EDF45928 /* MessagesViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAD89B8297FEF78B500C878A /* MessagesViewModel.swift */; };
+		AAD982C710CDA4C4A0153FA3 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3F3A70CC6E66647EA8ACBE9 /* Connection.swift */; };
+		BBF1327CC54E31FD4E84C8C8 /* AuthViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFB76BBB4DD8F7C1AC8EAA4C /* AuthViewModel.swift */; };
+		BC75510F02B166FFBEF66930 /* ServiceCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2986A6D6B9542CEC4CE30A5 /* ServiceCard.swift */; };
+		C849D604943B6818C3E9BEBC /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 51D1058C325905B6696E0A00 /* FirebaseFirestore */; };
+		D13372F961925FAD1E2C54E9 /* FlowLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A99C907ACA5F588C325FCA /* FlowLayout.swift */; };
+		E18B2AE147F082984917C6A6 /* AvatarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4EBA05525DC8FF11CB6E007 /* AvatarView.swift */; };
+		E2A8F04612FEF8D367B62541 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77FE2425BED091F653B84D03 /* Message.swift */; };
+		F144661C1F630D3591303776 /* ConnectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF79F2AD05BB5875418CB5D /* ConnectionService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		09B2FA33F8518E4848A8C32F /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
+		0A5841DB364209A1B4970632 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		0CAC8E52B200EC4C2610FE4C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1546DDD4728DA67F5D7D28AD /* DiscoveryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryView.swift; sourceTree = "<group>"; };
+		1A0A7AA3684588BB7C2E7986 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		1B6D445FCE56419963FB49FB /* PendingApprovalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingApprovalView.swift; sourceTree = "<group>"; };
+		1B81FA91906E56814AD3CF49 /* SkillTag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkillTag.swift; sourceTree = "<group>"; };
+		2520D09215558D65CF83CA35 /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
+		2591646A94273E4C07B6E64C /* FeedPost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedPost.swift; sourceTree = "<group>"; };
+		2EA957996C84774BD3825416 /* EditProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditProfileView.swift; sourceTree = "<group>"; };
+		323EF856C3806D63C66F7B79 /* Oceanna.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Oceanna.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		352A1119107B67EFC1498D39 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
+		483CFC8A46B12BBD01D648CF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		489DE3406A223CCF9A57745E /* SignUpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignUpView.swift; sourceTree = "<group>"; };
+		48E3B9870B54DF0FC735DA2B /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		4C30543FB6B64352627EA0ED /* MessagingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagingService.swift; sourceTree = "<group>"; };
+		4DA55A50DBC47864683A772E /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		51466A40B4BF230E2006D511 /* OceannaApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OceannaApp.swift; sourceTree = "<group>"; };
+		5964557DBE7CE713B3EADFA4 /* PortfolioCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioCard.swift; sourceTree = "<group>"; };
+		5D600AB5F10679F46380833B /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		63E3088ADB68AF3FBC3635A9 /* PortfolioItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioItem.swift; sourceTree = "<group>"; };
+		6455292BBD3EAFFCE5018E68 /* Review.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Review.swift; sourceTree = "<group>"; };
+		70710453EABAB178F1AB1F4A /* OceannaTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OceannaTheme.swift; sourceTree = "<group>"; };
+		77FE2425BED091F653B84D03 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
+		7BCBF374EE98F9012F84C91A /* CreatePostView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreatePostView.swift; sourceTree = "<group>"; };
+		7CF79F2AD05BB5875418CB5D /* ConnectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionService.swift; sourceTree = "<group>"; };
+		7DA42AF2B57C165198445E25 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		7F876278FFFFD7699ABFF18E /* WaitlistView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitlistView.swift; sourceTree = "<group>"; };
+		88A99C907ACA5F588C325FCA /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		8C71639156CC5BC14D6429B1 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
+		8E2E36F1F3480F398DBADC76 /* RatingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatingView.swift; sourceTree = "<group>"; };
+		919161EFE9A34A670BABC06B /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
+		A81A9234AE17213AA2C2D3D5 /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
+		AC71A55D4B5B7242F868AF17 /* MessagesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesListView.swift; sourceTree = "<group>"; };
+		B2BA123574ACC70E288E9F09 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C4703D473E06D92E750B695A /* ReviewCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewCard.swift; sourceTree = "<group>"; };
+		C4EBA05525DC8FF11CB6E007 /* AvatarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvatarView.swift; sourceTree = "<group>"; };
+		CFB76BBB4DD8F7C1AC8EAA4C /* AuthViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthViewModel.swift; sourceTree = "<group>"; };
+		D2986A6D6B9542CEC4CE30A5 /* ServiceCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceCard.swift; sourceTree = "<group>"; };
+		D3F3A70CC6E66647EA8ACBE9 /* Connection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
+		E3BF76AAA56940FE6FFAF1E5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		E4A8EF79F9D622B707D30F39 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		EB469CFE79A4E15A82554CD1 /* DiscoveryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveryViewModel.swift; sourceTree = "<group>"; };
+		F755B126629E598AB7AA2F93 /* FirestoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirestoreService.swift; sourceTree = "<group>"; };
+		FAD89B8297FEF78B500C878A /* MessagesViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagesViewModel.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F44142D676906F0879FE312A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C61C953A274CC3FA1429113 /* FirebaseAuth in Frameworks */,
+				C849D604943B6818C3E9BEBC /* FirebaseFirestore in Frameworks */,
+				21E020CB0763179719DBC4B6 /* FirebaseStorage in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		02280F06BC7742D55709AD58 /* Messages */ = {
+			isa = PBXGroup;
+			children = (
+				352A1119107B67EFC1498D39 /* ChatView.swift */,
+				AC71A55D4B5B7242F868AF17 /* MessagesListView.swift */,
+			);
+			path = Messages;
+			sourceTree = "<group>";
+		};
+		10B8620709A914E0B71C8C30 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				323EF856C3806D63C66F7B79 /* Oceanna.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		38695AB9B84E75796F9FAFD4 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		46FCE3158D0FAD18DC59F285 /* Feed */ = {
+			isa = PBXGroup;
+			children = (
+				7BCBF374EE98F9012F84C91A /* CreatePostView.swift */,
+				A81A9234AE17213AA2C2D3D5 /* FeedView.swift */,
+			);
+			path = Feed;
+			sourceTree = "<group>";
+		};
+		47E4EA68C6F0C8EC77AFB826 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				2EA957996C84774BD3825416 /* EditProfileView.swift */,
+				E4A8EF79F9D622B707D30F39 /* ProfileView.swift */,
+				0CAC8E52B200EC4C2610FE4C /* SettingsView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		542547FB5090FD5C12F713DE /* App */ = {
+			isa = PBXGroup;
+			children = (
+				B2BA123574ACC70E288E9F09 /* ContentView.swift */,
+				51466A40B4BF230E2006D511 /* OceannaApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		6AEF304EC9179DD86E07E511 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				0A5841DB364209A1B4970632 /* AuthService.swift */,
+				7CF79F2AD05BB5875418CB5D /* ConnectionService.swift */,
+				F755B126629E598AB7AA2F93 /* FirestoreService.swift */,
+				4C30543FB6B64352627EA0ED /* MessagingService.swift */,
+				09B2FA33F8518E4848A8C32F /* StorageService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		6B52DCA605DE75EC6828FB12 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				E0DDF6A3F77361BB1816E7B1 /* Design */,
+				38695AB9B84E75796F9FAFD4 /* Extensions */,
+				72807574D7A77FB07B6426C6 /* Navigation */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		72807574D7A77FB07B6426C6 /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				7DA42AF2B57C165198445E25 /* MainTabView.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		7E9293FF66B6E715C909C0A5 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				E73273CE5B7A56FAADF879F7 /* Auth */,
+				D142722AAB4419A29AC9456B /* Components */,
+				D752F5C5800D20FFDFBF4B94 /* Discovery */,
+				46FCE3158D0FAD18DC59F285 /* Feed */,
+				02280F06BC7742D55709AD58 /* Messages */,
+				A4B733F88AA6325FE693341F /* Onboarding */,
+				47E4EA68C6F0C8EC77AFB826 /* Profile */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		98D3A5B7047FEF02AD6D108D /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				CFB76BBB4DD8F7C1AC8EAA4C /* AuthViewModel.swift */,
+				5D600AB5F10679F46380833B /* ChatViewModel.swift */,
+				EB469CFE79A4E15A82554CD1 /* DiscoveryViewModel.swift */,
+				FAD89B8297FEF78B500C878A /* MessagesViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A4B733F88AA6325FE693341F /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				4DA55A50DBC47864683A772E /* OnboardingView.swift */,
+				1B6D445FCE56419963FB49FB /* PendingApprovalView.swift */,
+				7F876278FFFFD7699ABFF18E /* WaitlistView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		AC4C75D19CDDE813E16FA7AC /* Oceanna */ = {
+			isa = PBXGroup;
+			children = (
+				542547FB5090FD5C12F713DE /* App */,
+				6B52DCA605DE75EC6828FB12 /* Core */,
+				F189893DFC001B6D25D87EC5 /* Models */,
+				6AEF304EC9179DD86E07E511 /* Services */,
+				98D3A5B7047FEF02AD6D108D /* ViewModels */,
+				7E9293FF66B6E715C909C0A5 /* Views */,
+				E3BF76AAA56940FE6FFAF1E5 /* Assets.xcassets */,
+				483CFC8A46B12BBD01D648CF /* Info.plist */,
+			);
+			path = Oceanna;
+			sourceTree = "<group>";
+		};
+		D142722AAB4419A29AC9456B /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				C4EBA05525DC8FF11CB6E007 /* AvatarView.swift */,
+				88A99C907ACA5F588C325FCA /* FlowLayout.swift */,
+				2520D09215558D65CF83CA35 /* LoadingView.swift */,
+				5964557DBE7CE713B3EADFA4 /* PortfolioCard.swift */,
+				8E2E36F1F3480F398DBADC76 /* RatingView.swift */,
+				C4703D473E06D92E750B695A /* ReviewCard.swift */,
+				D2986A6D6B9542CEC4CE30A5 /* ServiceCard.swift */,
+				1B81FA91906E56814AD3CF49 /* SkillTag.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		D752F5C5800D20FFDFBF4B94 /* Discovery */ = {
+			isa = PBXGroup;
+			children = (
+				1546DDD4728DA67F5D7D28AD /* DiscoveryView.swift */,
+			);
+			path = Discovery;
+			sourceTree = "<group>";
+		};
+		E0DDF6A3F77361BB1816E7B1 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				70710453EABAB178F1AB1F4A /* OceannaTheme.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		E73273CE5B7A56FAADF879F7 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				8C71639156CC5BC14D6429B1 /* AuthenticationView.swift */,
+				1A0A7AA3684588BB7C2E7986 /* SignInView.swift */,
+				489DE3406A223CCF9A57745E /* SignUpView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		EB3B1A15D5ED2152F2587194 = {
+			isa = PBXGroup;
+			children = (
+				AC4C75D19CDDE813E16FA7AC /* Oceanna */,
+				10B8620709A914E0B71C8C30 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F189893DFC001B6D25D87EC5 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				D3F3A70CC6E66647EA8ACBE9 /* Connection.swift */,
+				2591646A94273E4C07B6E64C /* FeedPost.swift */,
+				77FE2425BED091F653B84D03 /* Message.swift */,
+				63E3088ADB68AF3FBC3635A9 /* PortfolioItem.swift */,
+				6455292BBD3EAFFCE5018E68 /* Review.swift */,
+				919161EFE9A34A670BABC06B /* Service.swift */,
+				48E3B9870B54DF0FC735DA2B /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C70740CA555410318ED8A82E /* Oceanna */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F2E7BB9795659C57BF5A4579 /* Build configuration list for PBXNativeTarget "Oceanna" */;
+			buildPhases = (
+				0E05F212C985F0FCEB313E75 /* Sources */,
+				C450B3EA74088A19A6798834 /* Resources */,
+				F44142D676906F0879FE312A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Oceanna;
+			packageProductDependencies = (
+				31433D62BE5E94EBF36690CF /* FirebaseAuth */,
+				51D1058C325905B6696E0A00 /* FirebaseFirestore */,
+				D2C89D6E64C608CF579B9C7C /* FirebaseStorage */,
+			);
+			productName = Oceanna;
+			productReference = 323EF856C3806D63C66F7B79 /* Oceanna.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C845F5C2F23E5583585CEA76 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					C70740CA555410318ED8A82E = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 2959B9BD73C6C64D22405C66 /* Build configuration list for PBXProject "Oceanna" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EB3B1A15D5ED2152F2587194;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				19CAED25F8258FA8FCB6E2FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C70740CA555410318ED8A82E /* Oceanna */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C450B3EA74088A19A6798834 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				62EE4A568D45D47543E2973F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0E05F212C985F0FCEB313E75 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6253D21090C1D7CB95F84E9D /* AuthService.swift in Sources */,
+				BBF1327CC54E31FD4E84C8C8 /* AuthViewModel.swift in Sources */,
+				175072A805B0D9E893F5B79D /* AuthenticationView.swift in Sources */,
+				E18B2AE147F082984917C6A6 /* AvatarView.swift in Sources */,
+				7A86D2B7D4844FACC1B8E08E /* ChatView.swift in Sources */,
+				285EE3AC7F2696940697C72D /* ChatViewModel.swift in Sources */,
+				AAD982C710CDA4C4A0153FA3 /* Connection.swift in Sources */,
+				F144661C1F630D3591303776 /* ConnectionService.swift in Sources */,
+				32C0CCCB366A83CAAE9AB488 /* ContentView.swift in Sources */,
+				758983BA4E14ABA7817402B8 /* CreatePostView.swift in Sources */,
+				68FAF5B0BC38248663BF6066 /* DiscoveryView.swift in Sources */,
+				12B330303CF22808750A7E72 /* DiscoveryViewModel.swift in Sources */,
+				59F506D7C5FBE4607C87C522 /* EditProfileView.swift in Sources */,
+				76FAAD4FF07CDC0F52832DF7 /* FeedPost.swift in Sources */,
+				77780F2842C2BD211F426A0B /* FeedView.swift in Sources */,
+				6C3906638972A46D2B54710D /* FirestoreService.swift in Sources */,
+				D13372F961925FAD1E2C54E9 /* FlowLayout.swift in Sources */,
+				8523AFEA3A9F98845373EA96 /* LoadingView.swift in Sources */,
+				28891B207284B000B4D76CFC /* MainTabView.swift in Sources */,
+				E2A8F04612FEF8D367B62541 /* Message.swift in Sources */,
+				88C3C1C8FB5A24B5635365FE /* MessagesListView.swift in Sources */,
+				A94C53BABF1F0AA9EDF45928 /* MessagesViewModel.swift in Sources */,
+				6A91A6682FAF4B8C1B1C170C /* MessagingService.swift in Sources */,
+				12AD4283B341E8AF3A49CB3E /* OceannaApp.swift in Sources */,
+				6F35CE45F09F0F454B90B265 /* OceannaTheme.swift in Sources */,
+				1524CC744C365B90052A1DFD /* OnboardingView.swift in Sources */,
+				824E385CCA9260515BDB2952 /* PendingApprovalView.swift in Sources */,
+				4CBA7C474F04E1127DC756E8 /* PortfolioCard.swift in Sources */,
+				A5E8FBC594D37CA58D25FDE8 /* PortfolioItem.swift in Sources */,
+				80807D79617A6C4E61B26A14 /* ProfileView.swift in Sources */,
+				5450BFAB33E019B2FDEAF53B /* RatingView.swift in Sources */,
+				2D1062D9FC4822DAFA20B303 /* Review.swift in Sources */,
+				A06ADC32D48B862967A675C9 /* ReviewCard.swift in Sources */,
+				4A2ED1FB861A355A71636D9B /* Service.swift in Sources */,
+				BC75510F02B166FFBEF66930 /* ServiceCard.swift in Sources */,
+				890428C2FECCB32E4E9EA325 /* SettingsView.swift in Sources */,
+				1EF787507FEFAAD404D86C76 /* SignInView.swift in Sources */,
+				A526672FD05E05ECFB3C2840 /* SignUpView.swift in Sources */,
+				4061875C0A2ECDE719E2AEFF /* SkillTag.swift in Sources */,
+				3DD57C447DF8B8A5ACE5DA4A /* StorageService.swift in Sources */,
+				62DE19C2E64A0CE3CAAD25B7 /* User.swift in Sources */,
+				85054AACD8A271DB52B3E5DE /* WaitlistView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		468B0098C3254AAFD885C891 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Oceanna/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oceanna.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4D3B2CCF87FBD7ACA41AB5E9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A060CF0EBE0D70737B795856 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B8CFD1A30C32D8093F42C6EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = Oceanna/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.oceanna.app;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2959B9BD73C6C64D22405C66 /* Build configuration list for PBXProject "Oceanna" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D3B2CCF87FBD7ACA41AB5E9 /* Debug */,
+				A060CF0EBE0D70737B795856 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F2E7BB9795659C57BF5A4579 /* Build configuration list for PBXNativeTarget "Oceanna" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				468B0098C3254AAFD885C891 /* Debug */,
+				B8CFD1A30C32D8093F42C6EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		19CAED25F8258FA8FCB6E2FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		31433D62BE5E94EBF36690CF /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19CAED25F8258FA8FCB6E2FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		51D1058C325905B6696E0A00 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19CAED25F8258FA8FCB6E2FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		D2C89D6E64C608CF579B9C7C /* FirebaseStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 19CAED25F8258FA8FCB6E2FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseStorage;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = C845F5C2F23E5583585CEA76 /* Project object */;
+}

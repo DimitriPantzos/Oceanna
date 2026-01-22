@@ -58,7 +58,8 @@ struct DiscoveryView: View {
 
     private var userSwipeView: some View {
         ZStack {
-            ForEach(Array(viewModel.users.enumerated().reversed()), id: \.element.id) { index, user in
+            ForEach(viewModel.users.indices.reversed(), id: \.self) { index in
+                let user = viewModel.users[index]
                 if index >= viewModel.currentIndex && index < viewModel.currentIndex + 3 {
                     SwipeCard(
                         content: {
@@ -81,7 +82,8 @@ struct DiscoveryView: View {
 
     private var opportunitySwipeView: some View {
         ZStack {
-            ForEach(Array(viewModel.opportunities.enumerated().reversed()), id: \.element.id) { index, opportunity in
+            ForEach(viewModel.opportunities.indices.reversed(), id: \.self) { index in
+                let opportunity = viewModel.opportunities[index]
                 if index >= viewModel.currentIndex && index < viewModel.currentIndex + 3 {
                     if let author = viewModel.opportunityAuthors[opportunity.authorId] {
                         SwipeCard(
@@ -186,7 +188,17 @@ struct SwipeCard<Content: View>: View {
     @State private var offset: CGSize = .zero
     @State private var opacity: Double = 1.0
 
-    private var swipeThreshold: CGFloat = 100
+    private let swipeThreshold: CGFloat = 100
+
+    init(
+        @ViewBuilder content: @escaping () -> Content,
+        onSwipeLeft: @escaping () -> Void,
+        onSwipeRight: @escaping () -> Void
+    ) {
+        self.content = content
+        self.onSwipeLeft = onSwipeLeft
+        self.onSwipeRight = onSwipeRight
+    }
 
     var body: some View {
         content()

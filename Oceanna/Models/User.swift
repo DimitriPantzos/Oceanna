@@ -24,7 +24,7 @@ enum ApprovalStatus: String, Codable {
 }
 
 // MARK: - Profile Visibility
-struct ProfileVisibility: Codable {
+struct ProfileVisibility: Codable, Equatable {
     var showSkills: Bool = true
     var showPortfolio: Bool = true
     var showBio: Bool = true
