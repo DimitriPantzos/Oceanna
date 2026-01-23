@@ -73,19 +73,24 @@ struct SignUpView: View {
     }
 
     private var isValid: Bool {
-        !email.isEmpty && !password.isEmpty && !displayName.isEmpty && password.count >= 6
+        let valid = !email.isEmpty && !password.isEmpty && !displayName.isEmpty && password.count >= 6
+        print("SignUp validation: email=\(email.isEmpty ? "empty" : "ok"), password=\(password.count) chars, name=\(displayName.isEmpty ? "empty" : "ok"), isValid=\(valid)")
+        return valid
     }
 
     private func signUp() {
+        print("SignUp: Button tapped, starting signup...")
         isLoading = true
         errorMessage = nil
 
         Task {
+            print("SignUp: Calling authViewModel.signUp...")
             await authViewModel.signUp(
                 email: email,
                 password: password,
                 displayName: displayName
             )
+            print("SignUp: Completed, errorMessage=\(authViewModel.errorMessage ?? "nil")")
             errorMessage = authViewModel.errorMessage
             isLoading = false
         }

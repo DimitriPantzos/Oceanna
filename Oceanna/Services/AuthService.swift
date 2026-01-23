@@ -91,8 +91,10 @@ class AuthService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        print("AuthService: Starting signup for \(email)")
         do {
             let result = try await auth.createUser(withEmail: email, password: password)
+            print("AuthService: User created successfully: \(result.user.uid)")
 
             let changeRequest = result.user.createProfileChangeRequest()
             changeRequest.displayName = displayName
@@ -109,6 +111,7 @@ class AuthService: ObservableObject {
             userProfile = user
             return user
         } catch let error as NSError {
+            print("AuthService: Signup error: \(error.localizedDescription)")
             throw mapAuthError(error)
         }
     }
@@ -117,9 +120,12 @@ class AuthService: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        print("AuthService: Starting signin for \(email)")
         do {
             try await auth.signIn(withEmail: email, password: password)
+            print("AuthService: Signin successful")
         } catch let error as NSError {
+            print("AuthService: Signin error: \(error.localizedDescription)")
             throw mapAuthError(error)
         }
     }
